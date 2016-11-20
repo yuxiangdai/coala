@@ -1,8 +1,7 @@
 import asyncio
 import concurrent.futures
-import logging
-
 import functools
+import logging
 import multiprocessing
 
 from coalib.core import DependencyTracker
@@ -19,6 +18,7 @@ def get_cpu_count():
 def schedule_bears(bears,
                    dependency_tracker,
                    event_loop,
+                   running_tasks,
                    executor):
     """
     Schedules the tasks of bears to the given executor and runs them on the
@@ -30,31 +30,35 @@ def schedule_bears(bears,
         The object that keeps track of dependencies.
     :param event_loop:
         The asyncio event loop to schedule bear tasks on.
+    :param running_tasks:
+        Tasks that are already scheduled, organized in a dict with
+        bear instances as keys and asyncio-coroutines as values containing
+        their scheduled tasks.
     :param executor:
         The executor to which the bear tasks are scheduled.
     """
-    blocking_tasks = {}
-
     for bear in bears:
-        if bear not in dependency_tracker.dependency_dict:
-            blocking_tasks[bear] = [
-                event_loop.run_in_executor(executor,
-                                           bear.execute_task,
-                                           task[0],
-                                           task[1])
-                for task in bear.generate_tasks()]
-            for task in blocking_tasks[bear]:
-                task.add_done_callback(functools.partial(finish_task,
-                                                         bear,
-                                                         dependency_tracker,
-                                                         blocking_tasks,
-                                                         event_loop,
-                                                         executor))
+        if bear in dependency_tracker.dependency_dict:
+            logging.debug("Dependencies for '{}' not yet resolved. Holding it "
+                          "back.".format(bear.name))
+        else:
+            running_tasks[bear] = {
+                event_loop.run_in_executor(
+                    executor, bear.analyze, *bear_args, *bear_kwargs)
+                for bear_args, bear_kwargs in bear.generate_tasks()}
+
+            for task in running_tasks[bear]:
+                task.add_done_callback(functools.partial(
+                    finish_task, bear, dependency_tracker, running_tasks,
+                    event_loop, executor))
+
+            logging.debug("Scheduled '{}' (tasks: {}).".format(
+                bear.name, len(running_tasks[bear])))
 
 
 def finish_task(bear,
                 dependency_tracker,
-                blocking_tasks,
+                running_tasks,
                 event_loop,
                 executor,
                 task):
@@ -68,7 +72,7 @@ def finish_task(bear,
         The bear that the task belongs to.
     :param dependency_tracker:
         The object that keeps track of dependencies.
-    :param blocking_tasks:
+    :param running_tasks:
         Dictionary that keeps track of the remaining tasks of each bear.
     :param event_loop:
         The ``asyncio`` event loop bear-tasks are scheduled on.
@@ -77,19 +81,25 @@ def finish_task(bear,
     :param task:
         The task that completed.
     """
-    log = logging.getLogger('Consumer task')
-    log.info(bear)
     # TODO Handle exceptions
+
+    # TODO The results need to be delegated to (I think) a custom function that
+    # TODO   processes them further. Or just return them all at once in `run`?
     for result in task.result():
         log.info(result)
-    blocking_tasks[bear].remove(task)
-    if not blocking_tasks[bear]:
+    # TODO --------------------------------------------------------------------
+
+    running_tasks[bear].remove(task)
+    if not running_tasks[bear]:
         resolved_bears = dependency_tracker.resolve(bear)
+
         if resolved_bears:
             schedule_bears(resolved_bears, dependency_tracker, event_loop,
-                           blocking_tasks, executor)
-        del blocking_tasks[bear]
-    if not blocking_tasks:
+                           running_tasks, executor)
+
+        del running_tasks[bear]
+
+    if not running_tasks:
         event_loop.stop()
 
 
@@ -143,7 +153,7 @@ def run(bears):
     dependency_tracker.add_bear_dependencies(bears)
 
     # Let's go.
-    schedule_bears(bears, dependency_tracker, event_loop, executor)
+    schedule_bears(bears, dependency_tracker, event_loop, {}, executor)
     try:
         event_loop.run_forever()
     finally:
