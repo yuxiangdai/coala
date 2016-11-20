@@ -1,2 +1,4 @@
 from .Bear import Bear
-from .FileBear import FileWiseBear
+from .DependencyTracker import DependencyTracker
+from .FileBear import FileBear
+from .ProjectBear import ProjectBear
