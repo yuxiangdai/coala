@@ -154,8 +154,9 @@ def run(bears, result_callback):
             def result_callback(result):
                 pass
     """
-    # TODO Maybe try to allow to exchange executor, especially to allow
-    # TODO   distributed computation.
+    # FIXME Allow to pass different executors nicely, for example to execute
+    # FIXME   coala with less cores, or to schedule jobs on distributed systems
+    # FIXME   (for example Mesos).
 
     # Set up event loop and executor.
     event_loop = asyncio.SelectorEventLoop()
@@ -167,7 +168,8 @@ def run(bears, result_callback):
     dependency_tracker.add_bear_dependencies(bears)
 
     # Let's go.
-    schedule_bears(bears, result_callback, dependency_tracker, event_loop, {}, executor)
+    schedule_bears(bears, result_callback, dependency_tracker, event_loop, {},
+                   executor)
     try:
         event_loop.run_forever()
     finally:
