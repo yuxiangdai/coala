@@ -16,6 +16,7 @@ def get_cpu_count():
 
 
 def schedule_bears(bears,
+                   result_callback,
                    dependency_tracker,
                    event_loop,
                    running_tasks,
@@ -26,6 +27,8 @@ def schedule_bears(bears,
 
     :param bears:
         A list of bear instances to be scheduled onto the process pool.
+    :param result_callback:
+        A callback function which is called when results are available.
     :param dependency_tracker:
         The object that keeps track of dependencies.
     :param event_loop:
@@ -39,7 +42,7 @@ def schedule_bears(bears,
     """
     for bear in bears:
         if bear in dependency_tracker.dependency_dict:
-            logging.debug("Dependencies for '{}' not yet resolved. Holding it "
+            logging.debug("Dependencies for '{}' not yet resolved. Holding "
                           "back.".format(bear.name))
         else:
             running_tasks[bear] = {
@@ -49,14 +52,15 @@ def schedule_bears(bears,
 
             for task in running_tasks[bear]:
                 task.add_done_callback(functools.partial(
-                    finish_task, bear, dependency_tracker, running_tasks,
-                    event_loop, executor))
+                    finish_task, bear, result_callback, dependency_tracker,
+                    running_tasks, event_loop, executor))
 
             logging.debug("Scheduled '{}' (tasks: {}).".format(
                 bear.name, len(running_tasks[bear])))
 
 
 def finish_task(bear,
+                result_callback,
                 dependency_tracker,
                 running_tasks,
                 event_loop,
@@ -70,6 +74,8 @@ def finish_task(bear,
 
     :param bear:
         The bear that the task belongs to.
+    :param result_callback:
+        A callback function which is called when results are available.
     :param dependency_tracker:
         The object that keeps track of dependencies.
     :param running_tasks:
@@ -81,21 +87,22 @@ def finish_task(bear,
     :param task:
         The task that completed.
     """
-    # TODO Handle exceptions
+    # TODO Handle exceptions!!!
 
-    # TODO The results need to be delegated to (I think) a custom function that
-    # TODO   processes them further. Or just return them all at once in `run`?
+    # FIXME Long operations on the result-callback do block the scheduler
+    # FIXME   significantly. It should be possible to schedule new Python
+    # FIXME   Threads on the given event_loop and process the callback there.
     for result in task.result():
-        log.info(result)
-    # TODO --------------------------------------------------------------------
+        # TODO Make a debug message?
+        result_callback(result)
 
     running_tasks[bear].remove(task)
     if not running_tasks[bear]:
         resolved_bears = dependency_tracker.resolve(bear)
 
         if resolved_bears:
-            schedule_bears(resolved_bears, dependency_tracker, event_loop,
-                           running_tasks, executor)
+            schedule_bears(resolved_bears, result_callback, dependency_tracker,
+                           event_loop, running_tasks, executor)
 
         del running_tasks[bear]
 
@@ -134,11 +141,18 @@ def load_files(filenames):
     return file_dict
 
 
-def run(bears):
+def run(bears, result_callback):
     """
     Runs a coala session.
 
-    :param bears: The bear instances to run.
+    :param bears:
+        The bear instances to run.
+    :param result_callback:
+        A callback function which is called when results are available. Must
+        have following signature::
+
+            def result_callback(result):
+                pass
     """
     # TODO Maybe try to allow to exchange executor, especially to allow
     # TODO   distributed computation.
@@ -153,7 +167,7 @@ def run(bears):
     dependency_tracker.add_bear_dependencies(bears)
 
     # Let's go.
-    schedule_bears(bears, dependency_tracker, event_loop, {}, executor)
+    schedule_bears(bears, result_callback, dependency_tracker, event_loop, {}, executor)
     try:
         event_loop.run_forever()
     finally:

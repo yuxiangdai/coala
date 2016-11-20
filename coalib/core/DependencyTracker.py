@@ -50,6 +50,35 @@ class DependencyTracker:
             for bear in bear_instance.BEAR_DEPS:
                 self._add_dependency(bear, dependant)
 
+    @staticmethod
+    def check_circular_dependency(bears, resolved=None, seen=None):
+        # TODO try to use sets.
+        if resolved is None:
+            resolved = []
+        if seen is None:
+            seen = []
+
+        for bear in bears:
+            if bear in resolved:
+                continue
+
+            missing = bear.missing_dependencies(resolved_bears)
+            if not missing:
+                resolved_bears.append(bear)
+                continue
+
+            if bear in seen:
+                seen.append(bear)
+                raise CircularDependencyError(seen)
+
+            resolved_bears = self.check_circular_dependency(
+                missing, resolved_bears, seen + [bear])
+            resolved_bears.append(bear)
+            seen.remove(
+                bear)  # Already resolved, no candidate for circular dep
+
+        return resolved_bears
+
     def check_circular_dependencies(self):
         # Use a copy of the dependency dict to walk through.
         dependencies = dict(self.dependency_dict)
