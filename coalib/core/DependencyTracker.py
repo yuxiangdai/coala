@@ -2,15 +2,19 @@ from collections import defaultdict
 
 
 class CircularDependencyError(Exception):
-    def __init__(self, bears):
+    def __init__(self, dependency_circle):
         """
         Creates the CircularDependencyError with a helpful message about the
         dependency.
+
+        :param dependency_circle:
+            The sequence of dependencies which form a circle. Should include
+            the item that causes the ``CircularDependencyError``.
         """
         Exception.__init__(
             self,
-            "Circular dependency detected: " + " -> ".join(
-                bear.name for bear in bears))
+            'Circular dependency detected: ' + ' -> '.join(
+                repr(dependency) for dependency in dependency_circle))
 
 
 class DependencyTracker:
@@ -117,9 +121,26 @@ class DependencyTracker:
         :return:
             Returns a set of dependants whose dependencies were all resolved.
         """
-        # TODO Handle case where dependencies of given dependency are not yet
-        # TODO  resolved!
+        # Check if dependency has itself dependencies which aren't resolved,
+        # these need to be removed too. The ones who instantiate a
+        # DependencyTracker are responsible for resolving dependencies in the
+        # right order. This operation does not free any dependencies.
+        # TODO
+        # TODO Better name for dependency2...
+        dependencies_to_remove = []
+        for dependency2, dependants in self.dependency_dict.items():
+            if dependency in dependants:
+                dependants.remove(dependency)
 
+                # If dependants set is now empty, schedule dependency2 for
+                # removal from dependency_dict.
+                if not dependants:
+                    dependencies_to_remove.append(dependency2)
+
+        for dependency2 in dependencies_to_remove:
+            del self.dependency_dict[dependency2]
+
+        # Now free dependants which do depend on the given dependency.
         possible_freed_dependants = self.dependency_dict.pop(dependency, set())
         non_free_dependants = set()
 
@@ -134,3 +155,5 @@ class DependencyTracker:
 
         # Remaining dependents are officially resolved.
         return possible_freed_dependants - non_free_dependants
+
+    # TODO Make dependency_dict "private"
