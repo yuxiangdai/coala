@@ -21,7 +21,7 @@ class FileBear(Bear):
 
         # TODO, especially what about Dependency results?
         # May raise RuntimeError so bear doesn't get executed on invalid params
-        self._kwargs =  get_kwargs_for_function(self.analyze, section)
+        self._kwargs = get_kwargs_for_function(self.analyze, section)
 
     def generate_tasks(self):
         """

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 
 class CircularDependencyError(Exception):
+
     def __init__(self, dependency_circle):
         """
         Creates the CircularDependencyError with a helpful message about the
@@ -18,6 +19,7 @@ class CircularDependencyError(Exception):
 
 
 class DependencyTracker:
+
     def __init__(self):
         self.dependency_dict = defaultdict(set)
 
