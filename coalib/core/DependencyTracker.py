@@ -125,20 +125,18 @@ class DependencyTracker:
         # these need to be removed too. The ones who instantiate a
         # DependencyTracker are responsible for resolving dependencies in the
         # right order. This operation does not free any dependencies.
-        # TODO
-        # TODO Better name for dependency2...
         dependencies_to_remove = []
-        for dependency2, dependants in self.dependency_dict.items():
+        for tracked_dependency, dependants in self.dependency_dict.items():
             if dependency in dependants:
                 dependants.remove(dependency)
 
                 # If dependants set is now empty, schedule dependency2 for
                 # removal from dependency_dict.
                 if not dependants:
-                    dependencies_to_remove.append(dependency2)
+                    dependencies_to_remove.append(tracked_dependency)
 
-        for dependency2 in dependencies_to_remove:
-            del self.dependency_dict[dependency2]
+        for tracked_dependency in dependencies_to_remove:
+            del self.dependency_dict[tracked_dependency]
 
         # Now free dependants which do depend on the given dependency.
         possible_freed_dependants = self.dependency_dict.pop(dependency, set())
