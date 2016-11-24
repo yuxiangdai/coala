@@ -41,6 +41,11 @@ class DependencyTracker:
         self.check_circular_dependency()
         self._add_dependency(dependency, dependant)
 
+    # TODO This method should be removed. Bear dependency creation is highly
+    # TODO   interface specific, i.e. when having to different bear instances
+    # TODO   of the same bear class, and they have a dependency, then there's
+    # TODO   a clash. This can happen for example with 2 sections, with the
+    # TODO   same bears but different setups.
     def add_bears_dependencies(self, bears):
         """
         Scans all bears for their dependencies and adds them accordingly to
