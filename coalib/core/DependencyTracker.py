@@ -101,7 +101,7 @@ class DependencyTracker:
             # better exception message that shows the dependency order.
             ordered_path = []
 
-            dependency, dependant = dependencies.popitem()
+            dependency, dependants = dependencies.popitem()
 
             path.add(dependency)
             ordered_path.append(dependency)
@@ -115,6 +115,35 @@ class DependencyTracker:
                     ordered_path.append(dependant)
 
                 dependant = dependencies.pop(dependant)
+
+    # TODO Use generic ccd algorithm below and provide custom interfaces
+    def ccd(self):
+        global_visited_set = set()
+
+        # Also use a visited_list to keep track of the dependency order. Makes
+        # debugging certainly easier when we have a circular conflict.
+        def visit(node, visited_set, visited_list):
+            # TODO Problem: We already need to check here if node was visited
+            if node in self.dependency_dict:
+                visited_list.append(node)
+
+                if node in visited_set:
+                    raise CircularDependencyError(visited_list)
+
+                visited_set.add(node)
+                global_visited_set.add(node)
+
+                for dependant in self.dependency_dict[node]:
+                    visit(dependant, visited_set, visited_list)
+
+                visited_set.remove(node)
+                visited_list.pop()
+            else:
+                return
+
+        for dependency, dependant in self.dependency_dict.items():
+            if dependency not in global_visited_set:
+                visit(dependant, {dependency}, [dependency])
 
     def resolve(self, dependency):
         """
@@ -162,3 +191,33 @@ class DependencyTracker:
         return possible_freed_dependants - non_free_dependants
 
     # TODO Make dependency_dict "private"
+
+
+def ccd(start_nodes, get_next_nodes):
+    global_visited_set = set()
+
+    # Also use a visited_list to keep track of the dependency order. Makes
+    # debugging certainly easier when we have a circular conflict.
+    def visit(node, visited_set, visited_list):
+        visited_list.append(node)
+
+        if node in visited_set:
+            raise CircularDependencyError(visited_list)
+        else:
+            visited_set.add(node)
+            global_visited_set.add(node)
+
+            subnodes = get_next_nodes(node)
+            for subnode in subnodes:
+                visit(subnode, visited_set, visited_list)
+
+            visited_set.remove(node)
+            visited_list.pop()
+
+    for node in start_nodes:
+        # If our start nodes do depend on each other, the global_visited_set
+        # improves the performance by not visiting those nodes again.
+        global_visited_set.add(node)
+        for subnode in get_next_nodes(node):
+            if subnode not in global_visited_set:
+                visit(subnode, {node}, [node])
