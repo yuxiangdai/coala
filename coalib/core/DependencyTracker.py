@@ -193,17 +193,21 @@ class DependencyTracker:
     # TODO Make dependency_dict "private"
 
 
-def ccd(start_nodes, get_next_nodes):
+def ccd(start_nodes, get_next_nodes, process_func=lambda: None):
     global_visited_set = set()
 
     # Also use a visited_list to keep track of the dependency order. Makes
     # debugging certainly easier when we have a circular conflict.
     def visit(node, visited_set, visited_list):
+        process_func(visited_list[-1], node)
+
         visited_list.append(node)
 
         if node in visited_set:
             raise CircularDependencyError(visited_list)
-        else:
+        elif node not in global_visited_set:
+            # This branch was already visited, means that everything that
+            # follows this node has been walked down already.
             visited_set.add(node)
             global_visited_set.add(node)
 
@@ -215,9 +219,7 @@ def ccd(start_nodes, get_next_nodes):
             visited_list.pop()
 
     for node in start_nodes:
-        # If our start nodes do depend on each other, the global_visited_set
-        # improves the performance by not visiting those nodes again.
-        global_visited_set.add(node)
-        for subnode in get_next_nodes(node):
-            if subnode not in global_visited_set:
+        if node not in global_visited_set:
+            global_visited_set.add(node)
+            for subnode in get_next_nodes(node):
                 visit(subnode, {node}, [node])
