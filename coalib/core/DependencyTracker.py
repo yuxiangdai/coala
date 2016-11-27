@@ -1,21 +1,6 @@
 from collections import defaultdict
 
-
-class CircularDependencyError(Exception):
-
-    def __init__(self, dependency_circle):
-        """
-        Creates the CircularDependencyError with a helpful message about the
-        dependency.
-
-        :param dependency_circle:
-            The sequence of dependencies which form a circle. Should include
-            the item that causes the ``CircularDependencyError``.
-        """
-        Exception.__init__(
-            self,
-            'Circular dependency detected: ' + ' -> '.join(
-                repr(dependency) for dependency in dependency_circle))
+from coalib.core import CircularDependencyError
 
 
 class DependencyTracker:
@@ -191,35 +176,3 @@ class DependencyTracker:
         return possible_freed_dependants - non_free_dependants
 
     # TODO Make dependency_dict "private"
-
-
-def ccd(start_nodes, get_next_nodes, process_func=lambda: None):
-    global_visited_set = set()
-
-    # Also use a visited_list to keep track of the dependency order. Makes
-    # debugging certainly easier when we have a circular conflict.
-    def visit(node, visited_set, visited_list):
-        process_func(visited_list[-1], node)
-
-        visited_list.append(node)
-
-        if node in visited_set:
-            raise CircularDependencyError(visited_list)
-        elif node not in global_visited_set:
-            # This branch was already visited, means that everything that
-            # follows this node has been walked down already.
-            visited_set.add(node)
-            global_visited_set.add(node)
-
-            subnodes = get_next_nodes(node)
-            for subnode in subnodes:
-                visit(subnode, visited_set, visited_list)
-
-            visited_set.remove(node)
-            visited_list.pop()
-
-    for node in start_nodes:
-        if node not in global_visited_set:
-            global_visited_set.add(node)
-            for subnode in get_next_nodes(node):
-                visit(subnode, {node}, [node])
