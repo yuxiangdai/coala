@@ -32,8 +32,6 @@ def test_traverse_graph_on_cyclic_graph(graph, start_nodes):
         with self.assertRaises(CircularDependencyError) as cm:
             traverse_graph(start_nodes, partial(get_successive_nodes, graph))
 
-        str(cm.exception)
-
     return test_function
 
 
@@ -63,7 +61,14 @@ def test_traverse_graph(graph, start_nodes, expected):
 
         # Test if edges were walked twice.
         result_set = set(results)
-        self.assertEqual(len(results), len(result_set), 'Edge walked twice.')
+
+        remaining_results = list(results)
+        for elem in result_set:
+            remaining_results.remove(elem)
+
+        self.assertEqual(len(remaining_results), 0,
+                         'Edge(s) walked twice: ' + ', '.join(
+                             str(r) for r in remaining_results))
 
         # Compare real with expected without respecting order.
         expected_set = set(expected)
@@ -72,7 +77,7 @@ def test_traverse_graph(graph, start_nodes, expected):
     return test_function
 
 
-class DependencyTrackerTest(unittest.TestCase):
+class GraphsTest(unittest.TestCase):
     test_traverse_graph_A = test_traverse_graph(
         {1: 2, 2: 3, 3: 4},
         {1, 2},
@@ -116,11 +121,11 @@ class DependencyTrackerTest(unittest.TestCase):
         set())
 
     test_traverse_graph_cyclic_A = test_traverse_graph_on_cyclic_graph(
-        {1: 2, 2: 3, 4: 1},
+        {1: 2, 2: 3, 3: 1},
         {1})
 
     test_traverse_graph_cyclic_B = test_traverse_graph_on_cyclic_graph(
-        {1: 2, 2: 3, 4: 1},
+        {1: 2, 2: 3, 3: 1},
         {2})
 
     test_traverse_graph_cyclic_C = test_traverse_graph_on_cyclic_graph(

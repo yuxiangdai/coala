@@ -2,23 +2,48 @@ from coalib.core import CircularDependencyError
 
 
 def traverse_graph(start_nodes, get_successive_nodes,
-                   run_on_node=lambda prev, next: None, visited_nodes=None):
-    if visited_nodes is None:
-        visited_nodes = set()
+                   run_on_edge=lambda prev, nxt: None):
+    """
+    Traverses all edges of a directed acyclic graph. Detects cyclic graphs by
+    raising an ``CircularDependencyError``.
 
-    next_nodes = set()
+    :param start_nodes:
+        The nodes where to start traversing the graph.
+    :param get_successive_nodes:
+        A callable that takes in a node and returns an iterable of the next
+        nodes to traverse next.
+    :param run_on_edge:
+        A callable that is run on each edge during traversing. Takes in two
+        parameters, the previous- and next-node which form an edge. The default
+        is an empty function.
+    :raises CircularDependencyError:
+        Raised when the graph is cyclic.
+    """
+    path = set()
+    visited_nodes = set()
+
+    def visit(node):
+        for subnode in get_successive_nodes(node):
+            if subnode in path:
+                raise CircularDependencyError(subnode)
+
+            run_on_edge(node, subnode)
+
+            if subnode in visited_nodes:
+                continue
+
+            visited_nodes.add(subnode)
+            path.add(subnode)
+
+            visit(subnode)
+
+            path.remove(subnode)
+
     for node in start_nodes:
-        if node in visited_nodes:
-            raise CircularDependencyError(node)
+        if node not in visited_nodes:
+            visited_nodes.add(node)
+            path.add(node)
 
-        for next_node in get_successive_nodes(node):
-            run_on_node(node, next_node)
-            next_nodes.add(next_node)
+            visit(node)
 
-    visited_nodes |= set(start_nodes)
-
-    if next_nodes:
-        traverse_graph(next_nodes, get_successive_nodes, run_on_node,
-                       visited_nodes)
-
-    visited_nodes -= start_nodes
+            path.remove(node)
