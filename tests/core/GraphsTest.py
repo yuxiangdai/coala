@@ -106,16 +106,24 @@ class GraphsTest(unittest.TestCase):
         {(1, 2)})
 
     test_traverse_graph_F = test_traverse_graph(
+        {1: 2, 2: [4, 8], 3: [2, 4], 4: [5, 12], 5: [6, 7], 6: [7, 8, 9, 10],
+         7: 11, 9: 10, 10: [7, 11], 12: 6},
+        {1, 3, 9, 7},
+        {(1, 2), (2, 4), (2, 8), (3, 2), (3, 4), (4, 5), (4, 12), (5, 6),
+         (5, 7), (6, 7), (6, 8), (6, 9), (6, 10), (7, 11), (9, 10), (10, 7),
+         (10, 11), (12, 6)})
+
+    test_traverse_graph_G = test_traverse_graph(
         {},
         {1, 2, 3},
         set())
 
-    test_traverse_graph_G = test_traverse_graph(
+    test_traverse_graph_H = test_traverse_graph(
         {},
         set(),
         set())
 
-    test_traverse_graph_H = test_traverse_graph(
+    test_traverse_graph_I = test_traverse_graph(
         {1: 2, 2: 3},
         set(),
         set())
@@ -131,3 +139,8 @@ class GraphsTest(unittest.TestCase):
     test_traverse_graph_cyclic_C = test_traverse_graph_on_cyclic_graph(
         {1: 2, 3: 4, 4: 5, 5: [6, 7], 6: [8, 9, 10], 9: 10, 7: [5, 11], 10: 7},
         {3})
+
+    test_traverse_graph_cyclic_D = test_traverse_graph_on_cyclic_graph(
+        {1: 2, 2: [4, 8], 3: [2, 4], 4: [5, 12], 5: [6, 7], 6: [7, 8, 9, 10],
+         7: 11, 9: 10, 10: [3, 7, 11], 12: 6},
+        {1, 3})
