@@ -55,7 +55,7 @@ class DependencyTracker:
             if dependency in dependants:
                 dependants.remove(dependency)
 
-                # If dependants set is now empty, schedule dependency2 for
+                # If dependants set is now empty, schedule dependency for
                 # removal from dependency_dict.
                 if not dependants:
                     dependencies_to_remove.append(tracked_dependency)
