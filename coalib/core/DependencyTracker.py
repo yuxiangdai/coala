@@ -6,15 +6,33 @@ class DependencyTracker:
     def __init__(self):
         self._dependency_dict = {}
 
-    # TODO
-    def __getitem__(self, item):
+    def get_dependants(self, dependency):
         """
-        Returns registered
-        :param item:
+        Returns all dependants for the given dependency.
+
+        :param dependency:
+            The dependency to retrieve all dependants from.
         :return:
+            A set of dependants.
         """
-        # TODO
-        return frozenset(self._dependency_dict[item])
+        try:
+            return set(self._dependency_dict[dependency])
+        except KeyError:
+            return set()
+
+    def get_dependencies(self, dependant):
+        """
+        Returns all dependencies of a given dependant.
+
+        :param dependant:
+            The dependant to retrieve all dependencies from.
+        :return:
+            A set of dependencies.
+        """
+        return set(
+            dependency
+            for dependency, dependants in self._dependency_dict.items()
+            if dependant in dependants)
 
     def add(self, dependency, dependant):
         """
