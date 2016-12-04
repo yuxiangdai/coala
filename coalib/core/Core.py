@@ -1,10 +1,12 @@
 import asyncio
 import concurrent.futures
 import functools
+from itertools import groupby
 import logging
 import multiprocessing
 
-from coalib.core import DependencyTracker
+from coalib.core import Bear, DependencyTracker
+from coalib.core.Graphs import traverse_graph
 
 
 def get_cpu_count():
@@ -41,7 +43,7 @@ def schedule_bears(bears,
         The executor to which the bear tasks are scheduled.
     """
     for bear in bears:
-        if bear in dependency_tracker.dependency_dict:
+        if dependency_tracker.get_dependencies(bear):
             logging.debug("Dependencies for '{}' not yet resolved. Holding "
                           "back.".format(bear.name))
         else:
@@ -141,6 +143,52 @@ def load_files(filenames):
     return file_dict
 
 
+def initialize_dependencies(bears):
+    """
+    Initializes and returns a ``DependencyTracker`` instance ready for
+    scheduling.
+
+    This function acquires, processes and registers bear dependencies
+    accordingly using a consumer-based system, where each dependency bear has
+    only a single instance per section.
+
+    :param bears:
+        The bears to initialize the ``DependencyTracker`` with.
+    :return:
+        A ``DependencyTracker`` instance.
+    """
+    dependency_tracker = DependencyTracker()
+
+    # For a consumer-based system, we have a situation which can be visualized
+    # with a graph:
+    #
+    # section1 -> bear1 ----> dependency-bear-type1 ---> dependency-bear-type3
+    #          -> bear2 ----> dependency-bear-type2 _/
+    # section2 -> bear3 __/
+    #
+    # We need to traverse this graph and instantiate dependency bears
+    # accordingly, one per section.
+
+    # Group bears by sections. These will serve as entry-points for the
+    # dependency-instantiation-graph.
+    for section, bears in groupby(bears, key=lambda bear: bear.section):
+        # Now traverse each edge of the graph, and instantiate a new dependency
+        # bear if not already instantiated. For the entry point bears, we hack
+        # in identity-mappings because those are already instances.
+        type_to_instance_map = {bear: bear for bear in bears}
+
+        def instantiate_and_track(prev_bear_type, next_bear_type):
+            if next_bear_type not in type_to_instance_map:
+                type_to_instance_map[next_bear_type] = next_bear_type(section)
+
+            dependency_tracker.add(type_to_instance_map[next_bear_type],
+                                   type_to_instance_map[prev_bear_type])
+
+        traverse_graph(bears, lambda bear: bear.DEPS, instantiate_and_track)
+
+    return dependency_tracker
+
+
 def run(bears, result_callback):
     """
     Runs a coala session.
@@ -158,14 +206,17 @@ def run(bears, result_callback):
     # FIXME   coala with less cores, or to schedule jobs on distributed systems
     # FIXME   (for example Mesos).
 
+    # Pre-collect bears in a set as we use them more than once. Especially
+    # remove duplicate instances.
+    bears = set(bears)
+
     # Set up event loop and executor.
     event_loop = asyncio.SelectorEventLoop()
     executor = concurrent.futures.ProcessPoolExecutor(
         max_workers=get_cpu_count())
 
     # Initialize dependency tracking.
-    dependency_tracker = DependencyTracker()
-    dependency_tracker.add_bear_dependencies(bears)
+    dependency_tracker = initialize_dependencies(bears)
 
     # Let's go.
     schedule_bears(bears, result_callback, dependency_tracker, event_loop, {},
