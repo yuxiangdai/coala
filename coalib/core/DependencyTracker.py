@@ -110,7 +110,7 @@ class DependencyTracker:
             lambda node: self._dependency_dict.get(node, frozenset()))
 
     @property
-    def dependencies_resolved(self):
+    def all_dependencies_resolved(self):
         return len(self._dependency_dict) == 0
 
     # TODO Make dependency_dict "private"
