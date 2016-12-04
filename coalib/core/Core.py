@@ -189,6 +189,11 @@ def initialize_dependencies(bears):
     return dependency_tracker
 
 
+# TODO Prototype, use variables for common executors or default executor.
+default_executor = concurrent.futures.ProcessPoolExecutor(
+    max_workers=get_cpu_count())
+
+
 def run(bears, result_callback):
     """
     Runs a coala session.
