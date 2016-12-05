@@ -112,5 +112,3 @@ class DependencyTracker:
     @property
     def all_dependencies_resolved(self):
         return len(self._dependency_dict) == 0
-
-    # TODO Make dependency_dict "private"

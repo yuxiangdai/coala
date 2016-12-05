@@ -1,19 +1,17 @@
 from coalib.core import CircularDependencyError
 
 
-# TODO Don't accept a run_on_edge callable, yield (prev, nxt) tuples as a
-# TODO   generator.
 def traverse_graph(start_nodes, get_successive_nodes,
                    run_on_edge=lambda prev, nxt: None):
     """
-    Traverses all edges of a directed acyclic graph. Detects cyclic graphs by
-    raising an ``CircularDependencyError``.
+    Traverses all edges of a directed acyclic graph once. Detects cyclic graphs
+    by raising a ``CircularDependencyError``.
 
     :param start_nodes:
         The nodes where to start traversing the graph.
     :param get_successive_nodes:
-        A callable that takes in a node and returns an iterable of the next
-        nodes to traverse next.
+        A callable that takes in a node and returns an iterable of nodes to
+        traverse next.
     :param run_on_edge:
         A callable that is run on each edge during traversing. Takes in two
         parameters, the previous- and next-node which form an edge. The default
