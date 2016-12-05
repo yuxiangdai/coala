@@ -7,6 +7,16 @@ def traverse_graph(start_nodes, get_successive_nodes,
     Traverses all edges of a directed acyclic graph once. Detects cyclic graphs
     by raising a ``CircularDependencyError``.
 
+    >>> graph = {1: [2], 2: [3, 4], 5: [3]}
+    >>> def get_successive_nodes(node):
+    ...     return graph.get(node, [])
+    >>> edges = set()
+    >>> def append_to_edges(prev, nxt):
+    ...     edges.add((prev, nxt))
+    >>> traverse_graph([1, 5], get_successive_nodes, append_to_edges)
+    >>> edges
+    {(1, 2), (2, 3), (2, 4), (5, 3)}
+
     :param start_nodes:
         The nodes where to start traversing the graph.
     :param get_successive_nodes:
