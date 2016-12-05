@@ -1,6 +1,8 @@
 from coalib.core import CircularDependencyError
 
 
+# TODO Don't accept a run_on_edge callable, yield (prev, nxt) tuples as a
+# TODO   generator.
 def traverse_graph(start_nodes, get_successive_nodes,
                    run_on_edge=lambda prev, nxt: None):
     """
