@@ -17,6 +17,14 @@ def traverse_graph(start_nodes, get_successive_nodes,
     >>> edges
     {(1, 2), (2, 3), (2, 4), (5, 3)}
 
+    You can also use this function to detect cyclic graphs:
+
+    >>> graph = {1: [2], 2: [3], 3: [1]}
+    >>> traverse_graph([1], get_successive_nodes)
+    Traceback (most recent call last):
+     ...
+    coalib.core.CircularDependencyError.CircularDependencyError: ...
+
     :param start_nodes:
         The nodes where to start traversing the graph.
     :param get_successive_nodes:
