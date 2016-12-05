@@ -174,8 +174,14 @@ def initialize_dependencies(bears):
     for section, bears in groupby(bears, key=lambda bear: bear.section):
         # Now traverse each edge of the graph, and instantiate a new dependency
         # bear if not already instantiated. For the entry point bears, we hack
-        # in identity-mappings because those are already instances.
-        type_to_instance_map = {bear: bear for bear in bears}
+        # in identity-mappings because those are already instances. Also map
+        # the types of the instantiated bears to those instances, as if the
+        # user already supplied an instance of a dependency, we reuse it
+        # accordingly.
+        type_to_instance_map = {}
+        for bear in bears:
+            type_to_instance_map[bear] = bear
+            type_to_instance_map[type(bear)] = bear
 
         def instantiate_and_track(prev_bear_type, next_bear_type):
             if next_bear_type not in type_to_instance_map:
