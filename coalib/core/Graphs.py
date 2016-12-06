@@ -1,4 +1,4 @@
-from coalib.core import CircularDependencyError
+from coalib.core.CircularDependencyError import CircularDependencyError
 
 
 def traverse_graph(start_nodes, get_successive_nodes,

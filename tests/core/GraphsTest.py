@@ -2,7 +2,7 @@ from collections import Iterable
 from functools import partial
 import unittest
 
-from coalib.core import CircularDependencyError
+from coalib.core.CircularDependencyError import CircularDependencyError
 from coalib.core.Graphs import traverse_graph
 
 

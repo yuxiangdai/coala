@@ -1,4 +1,4 @@
-from coalib.core import Bear
+from coalib.core.Bear import Bear
 
 
 class ProjectBear(Bear):

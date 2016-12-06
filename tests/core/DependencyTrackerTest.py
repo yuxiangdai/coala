@@ -1,7 +1,7 @@
 import unittest
 
-from coalib.core import CircularDependencyError
-from coalib.core import DependencyTracker
+from coalib.core.CircularDependencyError import CircularDependencyError
+from coalib.core.DependencyTracker import DependencyTracker
 
 
 class DependencyTrackerTest(unittest.TestCase):
