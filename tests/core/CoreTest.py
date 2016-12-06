@@ -1,37 +1,33 @@
 import unittest
 
+from coalib.settings.Section import Section
+from coalib.core.Bear import Bear
 from coalib.core.Core import initialize_dependencies
 
 
-# TODO Use real bears
-class BearBase:
-    def __init__(self, section):
-        self.section = section
-
-
-class BearA(BearBase):
+class BearA(Bear):
     DEPENDENCIES = set()
 
 
-class BearB(BearBase):
+class BearB(Bear):
     DEPENDENCIES = set()
 
 
-class BearC(BearBase):
+class BearC(Bear):
     DEPENDENCIES = {BearB}
 
 
-class BearD(BearBase):
+class BearD(Bear):
     DEPENDENCIES = {BearC}
 
 
-class BearE(BearBase):
+class BearE(Bear):
     DEPENDENCIES = {BearA, BearD}
 
 
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies(self):
-        bear_e = BearE(object())
+        bear_e = BearE(Section('test-section'))
         dependency_tracker = initialize_dependencies({bear_e})
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_e)), 2)
@@ -47,14 +43,19 @@ class CoreTest(unittest.TestCase):
             bear for bear in dependency_tracker.get_dependencies(bear_e)
             if isinstance(bear, BearD))
 
+        self.assertIs(bear_a.section, bear_e.section)
+        self.assertIs(bear_d.section, bear_e.section)
+
         self.assertEqual(dependency_tracker.get_dependencies(bear_a), set())
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_d)), 1)
         bear_c = dependency_tracker.get_dependencies(bear_d).pop()
+        self.assertIs(bear_c.section, bear_e.section)
         self.assertIsInstance(bear_c, BearC)
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_c)), 1)
         bear_b = dependency_tracker.get_dependencies(bear_c).pop()
+        self.assertIs(bear_b.section, bear_e.section)
         self.assertIsInstance(bear_b, BearB)
 
         self.assertEqual(dependency_tracker.get_dependencies(bear_b), set())
