@@ -60,3 +60,4 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(dependency_tracker.get_dependencies(bear_b), set())
 
         # TODO Test if we preinstantiate some bears, all bears, some bears twice
+        # TODO And the case when no dependencies at all occur!
