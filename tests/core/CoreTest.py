@@ -51,11 +51,11 @@ class CoreTest(unittest.TestCase):
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_d)), 1)
         bear_c = dependency_tracker.get_dependencies(bear_d).pop()
-        self.assertEqual(isinstance(bear_c, BearC))
+        self.assertIsInstance(bear_c, BearC)
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_c)), 1)
         bear_b = dependency_tracker.get_dependencies(bear_c).pop()
-        self.assertEqual(isinstance(bear_b, BearB))
+        self.assertIsInstance(bear_b, BearB)
 
         self.assertEqual(dependency_tracker.get_dependencies(bear_b), set())
 

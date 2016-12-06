@@ -172,6 +172,9 @@ def initialize_dependencies(bears):
     # Group bears by sections. These will serve as entry-points for the
     # dependency-instantiation-graph.
     for section, bears in groupby(bears, key=lambda bear: bear.section):
+        # Pre-collect bears as the iterator only works once.
+        bears = list(bears)
+
         # Now traverse each edge of the graph, and instantiate a new dependency
         # bear if not already instantiated. For the entry point bears, we hack
         # in identity-mappings because those are already instances. Also map
