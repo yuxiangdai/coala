@@ -5,7 +5,7 @@ from itertools import groupby
 import logging
 import multiprocessing
 
-from coalib.core import Bear, DependencyTracker
+from coalib.core import DependencyTracker
 from coalib.core.Graphs import traverse_graph
 
 
@@ -190,7 +190,8 @@ def initialize_dependencies(bears):
             dependency_tracker.add(type_to_instance_map[next_bear_type],
                                    type_to_instance_map[prev_bear_type])
 
-        traverse_graph(bears, lambda bear: bear.DEPS, instantiate_and_track)
+        traverse_graph(bears,
+                       lambda bear: bear.DEPENDENCIES, instantiate_and_track)
 
     return dependency_tracker
 
