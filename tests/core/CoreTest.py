@@ -28,7 +28,8 @@ class BearE_NeedsAD(Bear):
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
         bear_e = BearE_NeedsAD(Section('test-section'))
-        dependency_tracker = initialize_dependencies({bear_e})
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_e})
 
         self.assertEqual(len(dependency_tracker.get_dependencies(bear_e)), 2)
         self.assertTrue(any(isinstance(bear, BearA) for bear in
@@ -60,12 +61,19 @@ class CoreTest(unittest.TestCase):
 
         self.assertEqual(dependency_tracker.get_dependencies(bear_b), set())
 
+        # Finally check the bears_to_schedule
+        self.assertEqual(bears_to_schedule, {bear_a, bear_b})
+
     def test_initialize_dependencies2(self):
         section = Section('test-section')
-        dependency_tracker = initialize_dependencies(
-            {BearA(section), BearB(section)})
+        bear_a = BearA(section)
+        bear_b = BearB(section)
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_a, bear_b})
 
         self.assertTrue(dependency_tracker.all_dependencies_resolved)
+
+        self.assertEqual(bears_to_schedule, {bear_a, bear_b})
 
     def test_initialize_dependencies3(self):
         # Test whether pre-instantiated dependency bears are correctly
@@ -73,10 +81,13 @@ class CoreTest(unittest.TestCase):
         section = Section('test-section')
         bear_b = BearB(section)
         bear_c = BearC_NeedsB(section)
-        dependency_tracker = initialize_dependencies({bear_b, bear_c})
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_b, bear_c})
 
         self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
         self.assertEqual(dependency_tracker.get_dependencies(bear_c), {bear_b})
+
+        self.assertEqual(bears_to_schedule, {bear_b})
 
     def test_initialize_dependencies4(self):
         # Test whether pre-instantiated bears which belong to different
@@ -86,7 +97,8 @@ class CoreTest(unittest.TestCase):
 
         bear_b = BearB(section1)
         bear_c = BearC_NeedsB(section2)
-        dependency_tracker = initialize_dependencies({bear_b, bear_c})
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_b, bear_c})
 
         self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
         dependencies = dependency_tracker.get_all_dependencies()
@@ -94,6 +106,19 @@ class CoreTest(unittest.TestCase):
         dependency = dependencies.pop()
         self.assertIsInstance(dependency, BearB)
         self.assertIsNot(dependency, bear_b)
+
+        self.assertEqual(bears_to_schedule, {bear_b, dependency})
+
+    def test_initialize_dependencies5(self):
+        pass
+        # Test whether two bears of same type but different sections get their
+        # own dependency bear instances.
+
+    def test_initialize_dependencies6(self):
+        pass
+        # Test whether two pre-instantiated dependencies with the same section
+        # are correctly registered as dependencies, meaning a single one of
+        # those instances should be picked.
 
         # TODO Test if we preinstantiate some bears, all bears, some bears
         # TODO   twice

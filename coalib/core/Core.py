@@ -44,8 +44,10 @@ def schedule_bears(bears,
     """
     for bear in bears:
         if dependency_tracker.get_dependencies(bear):
-            logging.debug("Dependencies for '{}' not yet resolved. Holding "
-                          "back.".format(bear.name))
+            logging.warning(
+                "Dependencies for '{}' not yet resolved, holding back. This "
+                "should not happen, the dependency tracking system should be "
+                "smarter.".format(bear.name))
         else:
             running_tasks[bear] = {
                 event_loop.run_in_executor(
@@ -145,18 +147,27 @@ def load_files(filenames):
 
 def initialize_dependencies(bears):
     """
-    Initializes and returns a ``DependencyTracker`` instance ready for
-    scheduling.
+    Initializes and returns a ``DependencyTracker`` instance together with a
+    set of bears ready for scheduling.
 
     This function acquires, processes and registers bear dependencies
     accordingly using a consumer-based system, where each dependency bear has
     only a single instance per section.
 
+    The bears set returned accounts for bears that have dependencies and
+    excludes them accordingly. Dependency bears that have themselves no further
+    dependencies are included so the dependency chain can be processed
+    correctly.
+
     :param bears:
-        The bears to initialize the ``DependencyTracker`` with.
+        The set of bears to run that serve as an entry-point.
     :return:
-        A ``DependencyTracker`` instance.
+        A tuple with ``(dependency_tracker, bears_to_schedule)``.
     """
+    # Pre-collect bears in a set as we use them more than once. Especially
+    # remove duplicate instances.
+    bears = set(bears)
+
     dependency_tracker = DependencyTracker()
 
     # For a consumer-based system, we have a situation which can be visualized
@@ -171,9 +182,10 @@ def initialize_dependencies(bears):
 
     # Group bears by sections. These will serve as entry-points for the
     # dependency-instantiation-graph.
-    for section, bears in groupby(bears, key=lambda bear: bear.section):
+    for section, bears_per_section in groupby(bears,
+                                              key=lambda bear: bear.section):
         # Pre-collect bears as the iterator only works once.
-        bears = list(bears)
+        bears_per_section = list(bears_per_section)
 
         # Now traverse each edge of the graph, and instantiate a new dependency
         # bear if not already instantiated. For the entry point bears, we hack
@@ -182,7 +194,7 @@ def initialize_dependencies(bears):
         # user already supplied an instance of a dependency, we reuse it
         # accordingly.
         type_to_instance_map = {}
-        for bear in bears:
+        for bear in bears_per_section:
             type_to_instance_map[bear] = bear
             type_to_instance_map[type(bear)] = bear
 
@@ -193,11 +205,21 @@ def initialize_dependencies(bears):
             dependency_tracker.add(type_to_instance_map[next_bear_type],
                                    type_to_instance_map[prev_bear_type])
 
-        traverse_graph(bears,
+        traverse_graph(bears_per_section,
                        lambda bear: bear.DEPENDENCIES,
                        instantiate_and_track)
 
-    return dependency_tracker
+    # Get all bears that aren't resolved and exclude those from scheduler set.
+    bears -= {bear for bear in bears
+              if dependency_tracker.get_dependencies(bear)}
+
+    # Get all bears that have no further dependencies and shall be
+    # scheduled additionally.
+    for dependency in dependency_tracker.get_all_dependencies():
+        if not dependency_tracker.get_dependencies(dependency):
+            bears.add(dependency)
+
+    return dependency_tracker, bears
 
 
 # TODO Prototype, use variables for common executors or default executor.
@@ -222,21 +244,17 @@ def run(bears, result_callback):
     # FIXME   coala with less cores, or to schedule jobs on distributed systems
     # FIXME   (for example Mesos).
 
-    # Pre-collect bears in a set as we use them more than once. Especially
-    # remove duplicate instances.
-    bears = set(bears)
-
     # Set up event loop and executor.
     event_loop = asyncio.SelectorEventLoop()
     executor = concurrent.futures.ProcessPoolExecutor(
         max_workers=get_cpu_count())
 
     # Initialize dependency tracking.
-    dependency_tracker = initialize_dependencies(bears)
+    dependency_tracker, bears_to_schedule = initialize_dependencies(bears)
 
     # Let's go.
-    schedule_bears(bears, result_callback, dependency_tracker, event_loop, {},
-                   executor)
+    schedule_bears(bears_to_schedule, result_callback, dependency_tracker,
+                   event_loop, {}, executor)
     try:
         event_loop.run_forever()
     finally:
