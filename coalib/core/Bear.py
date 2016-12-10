@@ -132,31 +132,35 @@ class Bear(LogPrinterMixin):
     @classproperty
     def name(cls):
         """
-        :return: The name of the bear
+        :return:
+            The name of the bear
         """
         return cls.__name__
 
     @classproperty
     def can_detect(cls):
         """
-        :return: A set that contains everything a bear can detect, including
-                 information from what it can fix too.
+        :return:
+            A set that contains everything a bear can detect, including
+            information from what it can fix too.
         """
         return cls.CAN_DETECT | cls.CAN_FIX
 
     @classproperty
     def maintainers(cls):
         """
-        :return: A set containing ``MAINTAINERS`` if specified, else takes
-                 ``AUTHORS`` by default.
+        :return:
+            A set containing ``MAINTAINERS`` if specified, else takes
+            ``AUTHORS`` by default.
         """
         return cls.AUTHORS if cls.MAINTAINERS == set() else cls.MAINTAINERS
 
     @classproperty
     def maintainers_emails(cls):
         """
-        :return: A set containing ``MAINTAINERS_EMAILS`` if specified, else
-                 takes ``AUTHORS_EMAILS`` by default.
+        :return:
+            A set containing ``MAINTAINERS_EMAILS`` if specified, else takes
+            ``AUTHORS_EMAILS`` by default.
         """
         return (cls.AUTHORS_EMAILS if cls.MAINTAINERS_EMAILS == set()
                 else cls.MAINTAINERS)
@@ -166,9 +170,10 @@ class Bear(LogPrinterMixin):
         """
         Constructs a new bear.
 
-        :param section:       The section object where bear settings are
-                              contained.
-        :raises RuntimeError: Raised when bear requirements are not fulfilled.
+        :param section:
+            The section object where bear settings are contained.
+        :raises RuntimeError:
+            Raised when bear requirements are not fulfilled.
         """
         self.section = section
 
@@ -197,15 +202,15 @@ class Bear(LogPrinterMixin):
     @classmethod
     def get_metadata(cls):
         """
-        :return: Metadata for the run function. However parameters like
-                 ``self`` or parameters implicitly used by coala are already
-                 removed.
+        :return:
+            Metadata for the run function. However parameters like ``self`` or
+            parameters implicitly used by coala are already removed.
         """
         return FunctionMetadata.from_function(
             cls.analyze,
             omit={'self', 'dependency_results'})
 
-    # TODO ???
+    # TODO Shall I keep this??? I think there was a usage for this...
     @classmethod
     def __json__(cls):
         """
@@ -230,9 +235,10 @@ class Bear(LogPrinterMixin):
         """
         Checks if the given list contains all dependencies.
 
-        :param lst: A list of all already resolved bear classes (not
-                    instances).
-        :return:    A set of missing dependencies.
+        :param lst:
+            A list of all already resolved bear classes (not instances).
+        :return:
+            A set of missing dependencies.
         """
         return set(cls.BEAR_DEPS) - set(lst)
 
@@ -254,8 +260,9 @@ class Bear(LogPrinterMixin):
 
         Section value requirements shall be checked inside the ``run`` method.
 
-        :return: True if prerequisites are satisfied, else False or a string
-                 that serves a more detailed description of what's missing.
+        :return:
+            True if prerequisites are satisfied, else False or a string that
+            serves a more detailed description of what's missing.
         """
         return True
 
@@ -263,7 +270,8 @@ class Bear(LogPrinterMixin):
         """
         Gives the directory where the configuration file resides.
 
-        :return: Directory of the config file.
+        :return:
+            Directory of the config file.
         """
         return get_config_directory(self.section)
 
@@ -291,9 +299,12 @@ class Bear(LogPrinterMixin):
         >>> newfile == file
         True
 
-        :param url:      The URL to download the file from.
-        :param filename: The filename it should get, e.g. "test.txt".
-        :return:         A full path to the file ready for you to use!
+        :param url:
+            The URL to download the file from.
+        :param filename:
+            The filename it should get, e.g. "test.txt".
+        :return:
+            A full path to the file ready for you to use!
         """
         filename = join(cls.data_dir, filename)
         # todo what about curls fetch-if-newer?
@@ -330,8 +341,10 @@ class Bear(LogPrinterMixin):
         """
         Handles the given file.
 
-        :param file_proxy: Object containing filename and contents.
-        :return:           An iterable of Result.
+        :param file_proxy:
+            Object containing filename and contents.
+        :return:
+            An iterable of Result.
         """
         raise NotImplementedError("This function has to be implemented for a "
                                   "runnable bear.")
