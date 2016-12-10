@@ -166,16 +166,20 @@ class Bear(LogPrinterMixin):
                 else cls.MAINTAINERS)
 
     @enforce_signature
-    def __init__(self, section: Section):
+    def __init__(self, section: Section, file_dict: dict):
         """
         Constructs a new bear.
 
         :param section:
             The section object where bear settings are contained.
+        :param file_dict:
+            The file-dictionary containing a mapping of filenames to the
+            according file contents.
         :raises RuntimeError:
             Raised when bear requirements are not fulfilled.
         """
         self.section = section
+        self.file_dict = file_dict
 
         self.setup_dependencies()
         cp = type(self).check_prerequisites()

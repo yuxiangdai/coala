@@ -29,7 +29,7 @@ class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
         # General test which makes use of the full dependency chain from the
         # defined above.
-        bear_e = BearE_NeedsAD(Section('test-section'))
+        bear_e = BearE_NeedsAD(Section('test-section'), {})
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_e})
 
@@ -69,8 +69,10 @@ class CoreTest(unittest.TestCase):
     def test_initialize_dependencies2(self):
         # Test simple case without dependencies.
         section = Section('test-section')
-        bear_a = BearA(section)
-        bear_b = BearB(section)
+        filedict = {}
+
+        bear_a = BearA(section, filedict)
+        bear_b = BearB(section, filedict)
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_a, bear_b})
 
@@ -82,8 +84,11 @@ class CoreTest(unittest.TestCase):
         # Test whether pre-instantiated dependency bears are correctly
         # (re)used.
         section = Section('test-section')
-        bear_b = BearB(section)
-        bear_c = BearC_NeedsB(section)
+        filedict = {}
+
+        bear_b = BearB(section, filedict)
+        bear_c = BearC_NeedsB(section, filedict)
+
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_b, bear_c})
 
@@ -97,9 +102,11 @@ class CoreTest(unittest.TestCase):
         # sections are not (re)used, as the sections are different.
         section1 = Section('test-section1')
         section2 = Section('test-section2')
+        filedict = {}
 
-        bear_b = BearB(section1)
-        bear_c = BearC_NeedsB(section2)
+        bear_b = BearB(section1, filedict)
+        bear_c = BearC_NeedsB(section2, filedict)
+
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_b, bear_c})
 
@@ -117,9 +124,10 @@ class CoreTest(unittest.TestCase):
         # own dependency bear instances.
         section1 = Section('test-section1')
         section2 = Section('test-section2')
+        filedict = {}
 
-        bear_c_section1 = BearC_NeedsB(section1)
-        bear_c_section2 = BearC_NeedsB(section2)
+        bear_c_section1 = BearC_NeedsB(section1, filedict)
+        bear_c_section2 = BearC_NeedsB(section2, filedict)
 
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_c_section1, bear_c_section2})
@@ -146,13 +154,14 @@ class CoreTest(unittest.TestCase):
 
     def test_initialize_dependencies6(self):
         # Test whether two pre-instantiated dependencies with the same section
-        # are correctly registered as dependencies, so only a single one of
-        # those instances should be picked as a dependency.
+        # and file-dictionary are correctly registered as dependencies, so only
+        # a single one of those instances should be picked as a dependency.
         section = Section('test-section')
+        filedict = {}
 
-        bear_c = BearC_NeedsB(section)
-        bear_b1 = BearB(section)
-        bear_b2 = BearB(section)
+        bear_c = BearC_NeedsB(section, filedict)
+        bear_b1 = BearB(section, filedict)
+        bear_b2 = BearB(section, filedict)
 
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_c, bear_b1, bear_b2})
@@ -168,11 +177,12 @@ class CoreTest(unittest.TestCase):
 
     def test_initialize_dependencies7(self):
         # Test if a single dependency instance is created for two different
-        # instances pointing to the same section.
+        # instances pointing to the same section and file-dictionary.
         section = Section('test-section')
+        filedict = {}
 
-        bear_c1 = BearC_NeedsB(section)
-        bear_c2 = BearC_NeedsB(section)
+        bear_c1 = BearC_NeedsB(section, filedict)
+        bear_c2 = BearC_NeedsB(section, filedict)
 
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_c1, bear_c2})
@@ -198,3 +208,26 @@ class CoreTest(unittest.TestCase):
 
         self.assertTrue(dependency_tracker.all_dependencies_resolved)
         self.assertEqual(bears_to_schedule, set())
+
+    def test_initialize_dependencies9(self):
+        # Test whether pre-instantiated bears which have different
+        # file-dictionaries assigned are not (re)used, as they have different
+        # file-dictionaries.
+        section = Section('test-section')
+        filedict1 = {'f2': []}
+        filedict2 = {'f1': []}
+
+        bear_b = BearB(section, filedict1)
+        bear_c = BearC_NeedsB(section, filedict2)
+
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_b, bear_c})
+
+        self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
+        dependencies = dependency_tracker.get_all_dependencies()
+        self.assertEqual(len(dependencies), 1)
+        dependency = dependencies.pop()
+        self.assertIsInstance(dependency, BearB)
+        self.assertIsNot(dependency, bear_b)
+
+        self.assertEqual(bears_to_schedule, {bear_b, dependency})

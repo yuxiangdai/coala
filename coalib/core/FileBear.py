@@ -15,9 +15,7 @@ class FileBear(Bear):
             A dictionary containing filenames to process as keys and their
             contents (line-split with trailing return characters) as values.
         """
-        Bear.__init__(section)
-
-        self._file_dict = file_dict
+        Bear.__init__(section, file_dict)
 
         # TODO, especially what about Dependency results?
         # May raise RuntimeError so bear doesn't get executed on invalid params
@@ -32,4 +30,4 @@ class FileBear(Bear):
                  organized in pairs: ``(args-tuple, kwargs-dict)``
         """
         return (((filename, file), self._kwargs)
-                for filename, file in self._file_dict)
+                for filename, file in self.file_dict)

@@ -16,9 +16,7 @@ class ProjectBear(Bear):
             A dictionary containing filenames to process as keys and their
             contents (line-split with trailing return characters) as values.
         """
-        Bear.__init__(section)
-
-        self._file_dict = file_dict
+        Bear.__init__(section, file_dict)
 
         # TODO, especially what about Dependency results?
         # May raise RuntimeError so bear doesn't get executed on invalid params
@@ -32,4 +30,4 @@ class ProjectBear(Bear):
         :return: An iterable containing the positional and keyword arguments
                  organized in pairs: ``(args-tuple, kwargs-dict)``
         """
-        return (self._file_dict, self._kwargs),
+        return (self.file_dict, self._kwargs),

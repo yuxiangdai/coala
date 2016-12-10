@@ -223,17 +223,24 @@ def initialize_dependencies(bears):
     # For a consumer-based system, we have a situation which can be visualized
     # with a graph:
     #
-    # section1 -> bear1 ----> dependency-bear-type1 ---> dependency-bear-type3
-    #          -> bear2 ----> dependency-bear-type2 _/
-    # section2 -> bear3 __/
+    # (section1, file_dict1) (section1, file_dict2) (section2, file_dict2)
+    #       |       |                  |                      |
+    #       V       V                  V                      V
+    #     bear1   bear2              bear3                  bear4
+    #       |       |                  |                      |
+    #       V       V                  |                      |
+    #  BearType1  BearType2            -----------------------|
+    #       |       |                                         |
+    #       |       |                                         V
+    #       ---------------------------------------------> BearType3
     #
     # We need to traverse this graph and instantiate dependency bears
     # accordingly, one per section.
 
-    # Group bears by sections. These will serve as entry-points for the
-    # dependency-instantiation-graph.
-    for section, bears_per_section in groupby(bears,
-                                              key=lambda bear: bear.section):
+    # Group bears by sections and file-dictionaries. These will serve as
+    # entry-points for the dependency-instantiation-graph.
+    grouping = groupby(bears, key=lambda bear: (bear.section, bear.file_dict))
+    for (section, file_dict), bears_per_section in grouping:
         # Pre-collect bears as the iterator only works once.
         bears_per_section = list(bears_per_section)
 
@@ -250,7 +257,8 @@ def initialize_dependencies(bears):
 
         def instantiate_and_track(prev_bear_type, next_bear_type):
             if next_bear_type not in type_to_instance_map:
-                type_to_instance_map[next_bear_type] = next_bear_type(section)
+                type_to_instance_map[next_bear_type] = (
+                    next_bear_type(section, file_dict))
 
             dependency_tracker.add(type_to_instance_map[next_bear_type],
                                    type_to_instance_map[prev_bear_type])
