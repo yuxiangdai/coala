@@ -5,8 +5,10 @@ from itertools import groupby
 import logging
 import multiprocessing
 
+from coalib.collecting.Collectors import collect_files
 from coalib.core.DependencyTracker import DependencyTracker
 from coalib.core.Graphs import traverse_graph
+from coalib.settings.Setting import glob_list
 
 
 def get_cpu_count():
@@ -48,6 +50,7 @@ def schedule_bears(bears,
                 "Dependencies for '{}' not yet resolved, holding back. This "
                 "should not happen, the dependency tracking system should be "
                 "smarter.".format(bear.name))
+            # TODO More information? like section instance and name?
         else:
             running_tasks[bear] = {
                 event_loop.run_in_executor(
@@ -114,8 +117,27 @@ def finish_task(bear,
         event_loop.stop()
 
 
-# TODO This is only relevant for instantiating bears.
-def load_files(filenames):
+def get_filenames_from_section(section):
+    """
+    Returns all filenames that are requested for analysis in the given
+    ``section``.
+
+    :param section:
+        The section to load the filenames from.
+    :return:
+        An iterable of filenames.
+    """
+    # TODO Deprecate log-printer on collect_files
+    return collect_files(
+        glob_list(section.get('files', '')),
+        None,
+        ignored_file_paths=glob_list(section.get('ignore', '')),
+        limit_file_paths=glob_list(section.get('limit_files', '')))
+
+
+# TODO Test this. Especially with multi-section setup.
+def load_files(bears):
+    # TODO docs
     """
     Loads all files and arranges them inside a file-dictionary, where the keys
     are the filenames and the values the contents of the file (line-split
@@ -123,26 +145,49 @@ def load_files(filenames):
 
     Files that fail to load are ignored.
 
-    :param filenames: The names of the files to load.
-    :return:          The file-dictionary.
+    :param filenames:
+        The names of the files to load.
+    :return:
+        The file-dictionary.
     """
-    file_dict = {}
-    for filename in filenames:
-        try:
-            with open(filename, 'r', encoding='utf-8') as fl:
-                file_dict[filename] = tuple(fl.readlines())
-        except UnicodeDecodeError:
-            logging.warning(
-                "Failed to read file '{}'. It seems to contain non-unicode "
-                'characters. Leaving it out.'.format(filename))
-        except OSError as ex:  # pragma: no cover
-            logging.warning(
-                "Failed to read file '{}' because of an unknown error. "
-                'Leaving it out.'.format(filename), exc_info=ex)
+    section_to_file_dict = {}
+    master_file_dict = {}
+    # Use this list to not load corrupt/erroring files twice, as this produces
+    # doubled log messages.
+    corrupt_files = set()
 
-    logging.debug('Following files loaded:\n' + '\n'.join(file_dict.keys()))
+    for section, bears_per_section in groupby(bears,
+                                              key=lambda bear: bear.section):
+        filenames = get_filenames_from_section(section)
 
-    return file_dict
+        file_dict = {}
+        for filename in filenames:
+            try:
+                if filename in master_file_dict:
+                    file_dict[filename] = master_file_dict[filename]
+                elif filename in corrupt_files:
+                    # Ignore corrupt files that were already tried to load.
+                    pass
+                else:
+                    with open(filename, 'r', encoding='utf-8') as fl:
+                        lines = tuple(fl.readlines())
+                    file_dict[filename] = lines
+                    master_file_dict[filename] = lines
+            except UnicodeDecodeError:
+                logging.warning(
+                    "Failed to read file '{}'. It seems to contain non"
+                    '-unicode characters. Leaving it out.'.format(filename))
+                corrupt_files.add(filename)
+            except OSError as ex:  # pragma: no cover
+                logging.warning(
+                    "Failed to read file '{}' because of an unknown error. "
+                    'Leaving it out.'.format(filename), exc_info=ex)
+                corrupt_files.add(filename)
+
+    logging.debug('Following files loaded:\n' + '\n'.join(
+        master_file_dict.keys()))
+
+    return section_to_file_dict
 
 
 def initialize_dependencies(bears):
@@ -209,6 +254,7 @@ def initialize_dependencies(bears):
                        lambda bear: bear.DEPENDENCIES,
                        instantiate_and_track)
 
+    # TODO Part this up into different function?
     # Get all bears that aren't resolved and exclude those from scheduler set.
     bears -= {bear for bear in bears
               if dependency_tracker.get_dependencies(bear)}
@@ -250,6 +296,8 @@ def run(bears, result_callback):
         max_workers=get_cpu_count())
 
     # Initialize dependency tracking.
+    # TODO Shall I part up this function into two parts? This is totally easy
+    # TODO    though I'm not sure if it makes sense from usage perspective^^
     dependency_tracker, bears_to_schedule = initialize_dependencies(bears)
 
     # Let's go.
