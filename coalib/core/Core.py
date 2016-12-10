@@ -137,18 +137,19 @@ def get_filenames_from_section(section):
 
 # TODO Test this. Especially with multi-section setup.
 def load_files(bears):
-    # TODO docs
     """
-    Loads all files and arranges them inside a file-dictionary, where the keys
-    are the filenames and the values the contents of the file (line-split
-    including return characters).
+    Loads all files specified in the sections of the bears and arranges them
+    inside a file-dictionary, where the keys are the filenames and the values
+    the contents of the file (line-split including return characters).
 
-    Files that fail to load are ignored.
+    Files that fail to load are ignored and emit a log-warning.
 
-    :param filenames:
-        The names of the files to load.
+    :param bears:
+        The bears to load the specified files from.
     :return:
-        The file-dictionary.
+        A dictionary containing as keys the section instances mapping to the
+        according file-dictionary, which contains filenames as keys and maps
+        to the according file-contents.
     """
     section_to_file_dict = {}
     master_file_dict = {}
