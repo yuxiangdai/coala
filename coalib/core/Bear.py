@@ -341,6 +341,12 @@ class Bear(LogPrinterMixin):
         """
         return partial(Result.from_values, self)
 
+    def execute_task(self, args, kwargs):
+        # TODO Docs -> mention that here items are precollected into a list,
+        # TODO   as async stuff with generators which we usually use in
+        # TODO   `analyze` don't work.
+        return list(self.analyze(*args, **kwargs))
+
     def analyze(self, *args, **kwargs):
         """
         Handles the given file.
@@ -348,7 +354,18 @@ class Bear(LogPrinterMixin):
         :param file_proxy:
             Object containing filename and contents.
         :return:
-            An iterable of Result.
+            An iterable of results.
         """
         raise NotImplementedError("This function has to be implemented for a "
                                   "runnable bear.")
+
+    def generate_tasks(self):
+        """
+        This method is responsible for providing the job arguments ``analyze``
+        is called with.
+
+        :return:
+            An iterable containing the positional and keyword arguments
+            organized in pairs: ``(args-tuple, kwargs-dict)``
+        """
+        raise NotImplementedError

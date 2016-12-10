@@ -54,7 +54,7 @@ def schedule_bears(bears,
         else:
             running_tasks[bear] = {
                 event_loop.run_in_executor(
-                    executor, bear.analyze, *bear_args, **bear_kwargs)
+                    executor, bear.execute_task, bear_args, bear_kwargs)
                 for bear_args, bear_kwargs in bear.generate_tasks()}
 
             for task in running_tasks[bear]:

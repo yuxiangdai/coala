@@ -2,26 +2,39 @@ import unittest
 
 from coalib.settings.Section import Section
 from coalib.core.Bear import Bear
-from coalib.core.Core import initialize_dependencies
+from coalib.core.Core import initialize_dependencies, run
 
 
-class BearA(Bear):
+class TestBear(Bear):
     DEPENDENCIES = set()
 
+    def analyze(self, section, file_dict):
+        # The bear can in fact return everything (so it's not bound to actual
+        # `Result`s), but it must be at least an iterable.
+        return [(section, file_dict)]
 
-class BearB(Bear):
-    DEPENDENCIES = set()
+    def generate_tasks(self):
+        # Choose single task parallelization for simplicity.
+        return (self.section, self.file_dict),
 
 
-class BearC_NeedsB(Bear):
+class BearA(TestBear):
+    pass
+
+
+class BearB(TestBear):
+    pass
+
+
+class BearC_NeedsB(TestBear):
     DEPENDENCIES = {BearB}
 
 
-class BearD_NeedsC(Bear):
+class BearD_NeedsC(TestBear):
     DEPENDENCIES = {BearC_NeedsB}
 
 
-class BearE_NeedsAD(Bear):
+class BearE_NeedsAD(TestBear):
     DEPENDENCIES = {BearA, BearD_NeedsC}
 
 

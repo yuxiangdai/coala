@@ -23,11 +23,4 @@ class ProjectBear(Bear):
         self._kwargs = get_kwargs_for_function(self.analyze, section)
 
     def generate_tasks(self):
-        """
-        This method is responsible for providing the job arguments
-        ``execute_task`` is called with.
-
-        :return: An iterable containing the positional and keyword arguments
-                 organized in pairs: ``(args-tuple, kwargs-dict)``
-        """
         return (self.file_dict, self._kwargs),
