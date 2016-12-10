@@ -27,6 +27,8 @@ class BearE_NeedsAD(Bear):
 
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
+        # General test which makes use of the full dependency chain from the
+        # defined above.
         bear_e = BearE_NeedsAD(Section('test-section'))
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_e})
@@ -65,6 +67,7 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(bears_to_schedule, {bear_a, bear_b})
 
     def test_initialize_dependencies2(self):
+        # Test simple case without dependencies.
         section = Section('test-section')
         bear_a = BearA(section)
         bear_b = BearB(section)
@@ -110,17 +113,88 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(bears_to_schedule, {bear_b, dependency})
 
     def test_initialize_dependencies5(self):
-        pass
         # Test whether two bears of same type but different sections get their
         # own dependency bear instances.
+        section1 = Section('test-section1')
+        section2 = Section('test-section2')
+
+        bear_c_section1 = BearC_NeedsB(section1)
+        bear_c_section2 = BearC_NeedsB(section2)
+
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_c_section1, bear_c_section2})
+
+        # Test path for section1
+        bear_c_s1_dependencies = dependency_tracker.get_dependencies(
+            bear_c_section1)
+        self.assertEqual(len(bear_c_s1_dependencies), 1)
+        bear_b_section1 = bear_c_s1_dependencies.pop()
+        self.assertIsInstance(bear_b_section1, BearB)
+
+        # Test path for section2
+        bear_c_s2_dependencies = dependency_tracker.get_dependencies(
+            bear_c_section2)
+        self.assertEqual(len(bear_c_s2_dependencies), 1)
+        bear_b_section2 = bear_c_s2_dependencies.pop()
+        self.assertIsInstance(bear_b_section2, BearB)
+
+        # Test if both dependencies aren't the same.
+        self.assertIsNot(bear_b_section1, bear_b_section2)
+
+        # Test bears for schedule.
+        self.assertEqual(bears_to_schedule, {bear_b_section1, bear_b_section2})
 
     def test_initialize_dependencies6(self):
-        pass
         # Test whether two pre-instantiated dependencies with the same section
-        # are correctly registered as dependencies, meaning a single one of
-        # those instances should be picked.
+        # are correctly registered as dependencies, so only a single one of
+        # those instances should be picked as a dependency.
+        section = Section('test-section')
 
-        # TODO Test if we preinstantiate some bears, all bears, some bears
-        # TODO   twice
-        # TODO And the case when no dependencies at all occur! Test
-        # TODO   multi-section setup, with and without dependencies.
+        bear_c = BearC_NeedsB(section)
+        bear_b1 = BearB(section)
+        bear_b2 = BearB(section)
+
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_c, bear_b1, bear_b2})
+
+        bear_c_dependencies = dependency_tracker.get_dependencies(bear_c)
+        self.assertEqual(len(bear_c_dependencies), 1)
+        bear_c_dependency = bear_c_dependencies.pop()
+        self.assertIsInstance(bear_c_dependency, BearB)
+
+        self.assertIn(bear_c_dependency, {bear_b1, bear_b2})
+
+        self.assertEqual(bears_to_schedule, {bear_b1, bear_b2})
+
+    def test_initialize_dependencies7(self):
+        # Test if a single dependency instance is created for two different
+        # instances pointing to the same section.
+        section = Section('test-section')
+
+        bear_c1 = BearC_NeedsB(section)
+        bear_c2 = BearC_NeedsB(section)
+
+        dependency_tracker, bears_to_schedule = initialize_dependencies(
+            {bear_c1, bear_c2})
+
+        # Test first path.
+        bear_c1_dependencies = dependency_tracker.get_dependencies(bear_c1)
+        self.assertEqual(len(bear_c1_dependencies), 1)
+        bear_b1 = bear_c1_dependencies.pop()
+        self.assertIsInstance(bear_b1, BearB)
+
+        # Test second path.
+        bear_c2_dependencies = dependency_tracker.get_dependencies(bear_c2)
+        self.assertEqual(len(bear_c2_dependencies), 1)
+        bear_b2 = bear_c2_dependencies.pop()
+        self.assertIsInstance(bear_b2, BearB)
+
+        # Test if both dependencies are actually the same.
+        self.assertIs(bear_b1, bear_b2)
+
+    def test_initialize_dependencies8(self):
+        # Test totally empty case.
+        dependency_tracker, bears_to_schedule = initialize_dependencies(set())
+
+        self.assertTrue(dependency_tracker.all_dependencies_resolved)
+        self.assertEqual(bears_to_schedule, set())
