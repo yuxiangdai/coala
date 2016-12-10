@@ -15,7 +15,7 @@ class TestBear(Bear):
 
     def generate_tasks(self):
         # Choose single task parallelization for simplicity.
-        return (self.section, self.file_dict),
+        return ((self.section, self.file_dict), {}),
 
 
 class BearA(TestBear):
@@ -244,3 +244,20 @@ class CoreTest(unittest.TestCase):
         self.assertIsNot(dependency, bear_b)
 
         self.assertEqual(bears_to_schedule, {bear_b, dependency})
+
+    def test_run1(self):
+        # Test single bear without dependencies case.
+        section = Section('test-section')
+        filedict = {}
+        bear_a = BearA(section, filedict)
+
+        results = []
+
+        def on_result(result):
+            results.append(result)
+
+        run({bear_a}, on_result)
+
+        self.assertEqual(results, [(section, filedict)])
+
+    # TODO Test exceptions in `run`.

@@ -52,18 +52,20 @@ def schedule_bears(bears,
                 "smarter.".format(bear.name))
             # TODO More information? like section instance and name?
         else:
-            running_tasks[bear] = {
+            tasks = {
                 event_loop.run_in_executor(
                     executor, bear.execute_task, bear_args, bear_kwargs)
                 for bear_args, bear_kwargs in bear.generate_tasks()}
 
-            for task in running_tasks[bear]:
+            running_tasks[bear] = tasks
+
+            for task in tasks:
                 task.add_done_callback(functools.partial(
                     finish_task, bear, result_callback, dependency_tracker,
                     running_tasks, event_loop, executor))
 
-            logging.debug("Scheduled '{}' (tasks: {}).".format(
-                bear.name, len(running_tasks[bear])))
+            logging.debug("Scheduled '{}' (tasks: {}).".format(bear.name,
+                                                               len(tasks)))
 
 
 def finish_task(bear,
@@ -94,27 +96,31 @@ def finish_task(bear,
     :param task:
         The task that completed.
     """
-    # TODO Handle exceptions!!!
+    # TODO Handle exceptions!!! REALLY IMPORTANT!!! OTHERWISE THIS FREEZES THE
+    # TODO   CORE WHEN SOME DO HAPPEN, AS TASKS ARE NOT DELETED ACCORDINGLY
+    # TODO   FROM RUNNING TASKS!!
 
     # FIXME Long operations on the result-callback do block the scheduler
     # FIXME   significantly. It should be possible to schedule new Python
     # FIXME   Threads on the given event_loop and process the callback there.
-    for result in task.result():
-        # TODO Make a debug message?
-        result_callback(result)
+    try:
+        for result in task.result():
+            # TODO Make a debug message?
+            result_callback(result)
+    finally:
+        running_tasks[bear].remove(task)
+        if not running_tasks[bear]:
+            resolved_bears = dependency_tracker.resolve(bear)
 
-    running_tasks[bear].remove(task)
-    if not running_tasks[bear]:
-        resolved_bears = dependency_tracker.resolve(bear)
+            if resolved_bears:
+                schedule_bears(resolved_bears, result_callback,
+                               dependency_tracker, event_loop, running_tasks,
+                               executor)
 
-        if resolved_bears:
-            schedule_bears(resolved_bears, result_callback, dependency_tracker,
-                           event_loop, running_tasks, executor)
+            del running_tasks[bear]
 
-        del running_tasks[bear]
-
-    if not running_tasks:
-        event_loop.stop()
+        if not running_tasks:
+            event_loop.stop()
 
 
 def get_filenames_from_section(section):

@@ -23,4 +23,4 @@ class ProjectBear(Bear):
         self._kwargs = get_kwargs_for_function(self.analyze, section)
 
     def generate_tasks(self):
-        return (self.file_dict, self._kwargs),
+        return ((self.file_dict,), self._kwargs),
