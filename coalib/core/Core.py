@@ -136,6 +136,10 @@ def get_filenames_from_section(section):
 
 
 # TODO Test this. Especially with multi-section setup.
+# TODO OKAY! This has to be core independent, the user is responsible for
+# TODO   correctly initializing bears. As this also allows for virtual
+# TODO   files or improves speed for plugins, these could grab the already
+# TODO   loaded contents from RAM instead of reloading them from file.
 def load_files(bears):
     """
     Loads all files specified in the sections of the bears and arranges them
@@ -176,8 +180,8 @@ def load_files(bears):
                     master_file_dict[filename] = lines
             except UnicodeDecodeError:
                 logging.warning(
-                    "Failed to read file '{}'. It seems to contain non"
-                    '-unicode characters. Leaving it out.'.format(filename))
+                    "Failed to read file '{}'. It seems to contain non-"
+                    'unicode characters. Leaving it out.'.format(filename))
                 corrupt_files.add(filename)
             except OSError as ex:  # pragma: no cover
                 logging.warning(
