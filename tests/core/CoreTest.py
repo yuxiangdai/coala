@@ -8,14 +8,18 @@ from coalib.core.Core import initialize_dependencies, run
 class TestBear(Bear):
     DEPENDENCIES = set()
 
-    def analyze(self, section, file_dict):
+    def analyze(self, section_name, file_dict):
         # The bear can in fact return everything (so it's not bound to actual
         # `Result`s), but it must be at least an iterable.
-        return [(section, file_dict)]
+        return [(section_name, file_dict)]
 
     def generate_tasks(self):
-        # Choose single task parallelization for simplicity.
-        return ((self.section, self.file_dict), {}),
+        # Choose single task parallelization for simplicity. Also use the
+        # section name as a parameter instead of the section itself, as compare
+        # operations on tests do not succeed on them due to the pickling of
+        # multiprocessing to transfer objects to the other process, which
+        # instantiates a new section on each transfer.
+        return ((self.section.name, self.file_dict), {}),
 
 
 class BearA(TestBear):
@@ -258,6 +262,6 @@ class CoreTest(unittest.TestCase):
 
         run({bear_a}, on_result)
 
-        self.assertEqual(results, [(section, filedict)])
+        self.assertEqual(results, [(section.name, filedict)])
 
     # TODO Test exceptions in `run`.
