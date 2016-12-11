@@ -11,7 +11,7 @@ from coalib.core.Graphs import traverse_graph
 from coalib.settings.Setting import glob_list
 
 
-# TODO more loggin messages?
+# TODO more logging messages?
 
 def get_cpu_count():
     try:
