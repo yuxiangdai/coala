@@ -1,5 +1,7 @@
 # TODO THESE ARE REMAINS FROM MY WORK, EXCLUDE FROM MERGE!
 
+import logging
+
 from coalib.settings.Setting import glob_list
 from coalib.collecting.Collectors import collect_files
 
