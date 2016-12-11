@@ -100,6 +100,8 @@ def finish_task(bear,
     # FIXME   significantly. It should be possible to schedule new Python
     # FIXME   Threads on the given event_loop and process the callback there.
     try:
+        # TODO Oh shit what if a dependency bear crashes?
+
         for result in task.result():
             result_callback(result)
     except Exception as ex:

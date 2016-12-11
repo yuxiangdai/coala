@@ -346,4 +346,5 @@ class CoreTest(unittest.TestCase):
     # TODO   sections/file-dicts.
 
     # TODO test dependency result passing, and also try to generate tasks
-    # TODO   dynamically from dependency-results!
+    # TODO   dynamically from dependency-results! And test that
+    # TODO `self.dependency_results == None` when no deps provided.
