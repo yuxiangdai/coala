@@ -111,6 +111,12 @@ def finish_task(bear,
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
             # TODO Ahh fuck what about passing dependency results? ...
+            # TODO   I think we should do `set_dependency_results` inside a
+            # TODO   bear (or just assigning a property...). Those results are
+            # TODO   only passed to the result-callback if the instance was
+            # TODO   specified manually (then this is actually a usecase for
+            # TODO   specifying those yourself). Hmm... or just pass every
+            # TODO   result... not sure. Latter is easier^^
             resolved_bears = dependency_tracker.resolve(bear)
 
             if resolved_bears:
