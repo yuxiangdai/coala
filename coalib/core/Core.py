@@ -98,10 +98,6 @@ def finish_task(bear,
     :param task:
         The task that completed.
     """
-    # TODO Handle exceptions!!! REALLY IMPORTANT!!! OTHERWISE THIS FREEZES THE
-    # TODO   CORE WHEN SOME DO HAPPEN, AS TASKS ARE NOT DELETED ACCORDINGLY
-    # TODO   FROM RUNNING TASKS!!
-
     # FIXME Long operations on the result-callback do block the scheduler
     # FIXME   significantly. It should be possible to schedule new Python
     # FIXME   Threads on the given event_loop and process the callback there.

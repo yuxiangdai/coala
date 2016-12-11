@@ -42,6 +42,11 @@ class BearE_NeedsAD(TestBear):
     DEPENDENCIES = {BearA, BearD_NeedsC}
 
 
+class FailingBear(TestBear):
+    def analyze(self, bear_name, section_name, file_dict):
+        raise ValueError
+
+
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
         # General test which makes use of the full dependency chain from the
@@ -294,4 +299,20 @@ class CoreTest(unittest.TestCase):
             {BearE_NeedsAD.name, BearD_NeedsC.name, BearC_NeedsB.name,
              BearA.name, BearB.name})
 
-    # TODO Test exceptions in `run`, from bear and from result handler.
+    def test_run3(self):
+        # Test exception in result handler. The core needs to quit correctly
+        # when all bears are finished, even if one crashed.
+        bear_a = BearA(Section('test-section'), {})
+
+        def on_result(result):
+            raise ValueError
+
+        run({bear_a}, on_result)
+
+    def test_run4(self):
+        # Test exception in bear. Core needs to shutdown directly and not wait
+        # forever.
+        self.execute_run({FailingBear(Section('test-section'), {})})
+
+    # TODO Test heavy setup, multiple instances with same and different
+    # TODO   sections/file-dicts.
