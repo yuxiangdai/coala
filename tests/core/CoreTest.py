@@ -8,10 +8,10 @@ from coalib.core.Core import initialize_dependencies, run
 class TestBear(Bear):
     DEPENDENCIES = set()
 
-    def analyze(self, section_name, file_dict):
+    def analyze(self, bear_name, section_name, file_dict):
         # The bear can in fact return everything (so it's not bound to actual
         # `Result`s), but it must be at least an iterable.
-        return [(section_name, file_dict)]
+        return [(bear_name, section_name, file_dict)]
 
     def generate_tasks(self):
         # Choose single task parallelization for simplicity. Also use the
@@ -19,7 +19,7 @@ class TestBear(Bear):
         # operations on tests do not succeed on them due to the pickling of
         # multiprocessing to transfer objects to the other process, which
         # instantiates a new section on each transfer.
-        return ((self.section.name, self.file_dict), {}),
+        return ((self.name, self.section.name, self.file_dict), {}),
 
 
 class BearA(TestBear):
@@ -249,19 +249,49 @@ class CoreTest(unittest.TestCase):
 
         self.assertEqual(bears_to_schedule, {bear_b, dependency})
 
+    @staticmethod
+    def execute_run(bears):
+        results = []
+
+        def on_result(result):
+            results.append(result)
+
+        run(bears, on_result)
+
+        return results
+
     def test_run1(self):
         # Test single bear without dependencies case.
         section = Section('test-section')
         filedict = {}
         bear_a = BearA(section, filedict)
 
-        results = []
+        results = self.execute_run({bear_a})
 
-        def on_result(result):
-            results.append(result)
+        self.assertEqual(results, [('BearA', section.name, filedict)])
 
-        run({bear_a}, on_result)
+    def test_run2(self):
+        # Run a complete dependency chain.
+        section = Section('test-section')
+        filedict = {}
+        bear_e = BearE_NeedsAD(section, filedict)
 
-        self.assertEqual(results, [(section.name, filedict)])
+        results = self.execute_run({bear_e})
 
-    # TODO Test exceptions in `run`.
+        # Test if the section name and filedict are all the same.
+        for bear_name, section_name, fdict in results:
+            self.assertEqual(section_name, section.name)
+            self.assertEqual(fdict, filedict)
+
+        # The last bear executed has to be BearE_NeedsAD.
+        self.assertEqual(results[-1][0], bear_e.name)
+
+        bear_names_executed = {result[0] for result in results}
+
+        self.assertEqual(len(bear_names_executed), len(results))
+        self.assertEqual(
+            bear_names_executed,
+            {BearE_NeedsAD.name, BearD_NeedsC.name, BearC_NeedsB.name,
+             BearA.name, BearB.name})
+
+    # TODO Test exceptions in `run`, from bear and from result handler.

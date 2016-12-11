@@ -47,7 +47,7 @@ def schedule_bears(bears,
         The executor to which the bear tasks are scheduled.
     """
     for bear in bears:
-        if dependency_tracker.get_dependencies(bear):
+        if dependency_tracker.get_dependencies(bear):  # pragma: no cover
             logging.warning(
                 "Dependencies for '{}' not yet resolved, holding back. This "
                 "should not happen, the dependency tracking system should be "
