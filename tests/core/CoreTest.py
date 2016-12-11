@@ -22,6 +22,21 @@ class TestBear(Bear):
         return ((self.name, self.section.name, self.file_dict), {}),
 
 
+class MultiParallelizationBear(Bear):
+    DEPENDENCIES = set()
+
+    def analyze(self, run_id):
+        return [run_id]
+
+    def generate_tasks(self):
+        # Choose single task parallelization for simplicity. Also use the
+        # section name as a parameter instead of the section itself, as compare
+        # operations on tests do not succeed on them due to the pickling of
+        # multiprocessing to transfer objects to the other process, which
+        # instantiates a new section on each transfer.
+        return (((i,), {}) for i in range(3))
+
+
 class BearA(TestBear):
     pass
 
@@ -313,6 +328,19 @@ class CoreTest(unittest.TestCase):
         # Test exception in bear. Core needs to shutdown directly and not wait
         # forever.
         self.execute_run({FailingBear(Section('test-section'), {})})
+
+    def test_run5(self):
+        # Test when bear is not completely finished because it has multiple
+        # tasks.
+        bear = MultiParallelizationBear(Section('test-section'), {})
+
+        results = self.execute_run({bear})
+
+        result_set = set(results)
+        self.assertEqual(len(result_set), len(results))
+        self.assertEqual(result_set, {0, 1, 2})
+        # TODO Test this with dependencies, whether they get resolved
+        # TODO   correctly.
 
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts.

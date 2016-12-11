@@ -110,6 +110,7 @@ def finish_task(bear,
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
+            # TODO Ahh fuck what about passing dependency results? ...
             resolved_bears = dependency_tracker.resolve(bear)
 
             if resolved_bears:
