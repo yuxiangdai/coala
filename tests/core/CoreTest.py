@@ -344,3 +344,6 @@ class CoreTest(unittest.TestCase):
 
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts.
+
+    # TODO test dependency result passing, and also try to generate tasks
+    # TODO   dynamically from dependency-results!
