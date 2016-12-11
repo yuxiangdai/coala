@@ -117,6 +117,11 @@ def finish_task(bear,
             # TODO   specified manually (then this is actually a usecase for
             # TODO   specifying those yourself). Hmm... or just pass every
             # TODO   result... not sure. Latter is easier^^
+            # TODO   IMPORTANT: Use add_dependency_results, for multiple
+            # TODO   dependency bears + write tests.
+            # FIXME optimization hint: for dependency results, try to execute
+            # FIXME   those bears onto the same process/thread if possible.
+            # FIXME   or just wait for python removing GIL :3
             resolved_bears = dependency_tracker.resolve(bear)
 
             if resolved_bears:
