@@ -11,6 +11,8 @@ from coalib.core.Graphs import traverse_graph
 from coalib.settings.Setting import glob_list
 
 
+# TODO more loggin messages?
+
 def get_cpu_count():
     try:
         return multiprocessing.cpu_count()
@@ -105,8 +107,10 @@ def finish_task(bear,
     # FIXME   Threads on the given event_loop and process the callback there.
     try:
         for result in task.result():
-            # TODO Make a debug message?
             result_callback(result)
+    except Exception as ex:
+        logging.error('An exception was thrown during bear execution or '
+                      'result-handling.', exc_info=ex)
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
