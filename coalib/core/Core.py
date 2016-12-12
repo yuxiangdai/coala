@@ -95,9 +95,6 @@ def finish_task(bear,
     :param task:
         The task that completed.
     """
-    # FIXME Long operations on the result-callback do block the scheduler
-    # FIXME   significantly. It should be possible to schedule new Python
-    # FIXME   Threads on the given event_loop and process the callback there.
     try:
         results = task.result()
 
@@ -106,6 +103,10 @@ def finish_task(bear,
             dependant.add_dependency_results(results)
 
         for result in results:
+            # FIXME Long operations on the result-callback do block the
+            # FIXME   scheduler significantly. It should be possible to
+            # FIXME   schedule new Python Threads on the given event_loop and
+            # FIXME   process the callback there.
             result_callback(result)
     except Exception as ex:
         logging.error('An exception was thrown during bear execution or '
