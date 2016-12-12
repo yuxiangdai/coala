@@ -181,6 +181,10 @@ class Bear(LogPrinterMixin):
         self.section = section
         self.file_dict = file_dict
 
+        # TODO Maybe a dict mapping bears to their results for easier access?
+        # TODO   As normally you need to filter them always for bear types...
+        self._dependency_results = []
+
         self.setup_dependencies()
         cp = type(self).check_prerequisites()
         if cp is not True:
@@ -191,6 +195,32 @@ class Bear(LogPrinterMixin):
 
             logging.error(error_string)
             raise RuntimeError(error_string)
+
+    def add_dependency_results(self, dependency_results):
+        """
+        Adds dependency results to this instance.
+
+        This function is used by the core to add dependency results as they
+        are ready.
+
+        :param dependency_results:
+            The results to add.
+        """
+        for result in dependency_results:
+            self._dependency_results.append(result)
+
+    @property
+    def dependency_results(self):
+        """
+        Contains all dependency results.
+
+        This variable gets set during bear execution from the core and can be
+        used from ``analyze``.
+
+        :return:
+            A list of results received from dependency bears.
+        """
+        return self._dependency_results
 
     def log_message(self, log_message, timestamp=None, **kwargs):
         level_map = {LOG_LEVEL.DEBUG: logging.DEBUG,

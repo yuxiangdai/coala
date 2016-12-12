@@ -107,6 +107,9 @@ def finish_task(bear,
     except Exception as ex:
         logging.error('An exception was thrown during bear execution or '
                       'result-handling.', exc_info=ex)
+
+        # Unschedule dependant bears.
+        # TODO Log which bears where unscheduled!
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
