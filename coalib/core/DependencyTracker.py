@@ -3,7 +3,7 @@ from itertools import chain
 from coalib.core.Graphs import traverse_graph
 
 
-# TODO Make doctests
+# TODO Make doctests and delete unnecessary tests in test file is possible
 class DependencyTracker:
     # TODO docstring here
 
@@ -13,6 +13,17 @@ class DependencyTracker:
     def get_dependants(self, dependency):
         """
         Returns all dependants for the given dependency.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.add(1, 3)
+        >>> tracker.get_dependants(0)
+        {1, 2}
+        >>> tracker.get_dependants(1)
+        {3}
+        >>> tracker.get_dependants(2)
+        set()
 
         :param dependency:
             The dependency to retrieve all dependants from.
@@ -27,6 +38,17 @@ class DependencyTracker:
     def get_dependencies(self, dependant):
         """
         Returns all dependencies of a given dependant.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.add(1, 2)
+        >>> tracker.get_dependencies(0)
+        set()
+        >>> tracker.get_dependencies(1)
+        {0}
+        >>> tracker.get_dependencies(2)
+        {0, 1}
 
         :param dependant:
             The dependant to retrieve all dependencies from.
@@ -101,6 +123,13 @@ class DependencyTracker:
     def dependants(self):
         """
         Returns a set of all registered dependants.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.add(1, 3)
+        >>> tracker.dependants
+        {1, 2, 3}
         """
         return set(chain.from_iterable(self._dependency_dict.values()))
 
@@ -108,6 +137,13 @@ class DependencyTracker:
     def dependencies(self):
         """
         Returns a set of all registered dependencies.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.add(1, 3)
+        >>> tracker.dependencies
+        {0, 1}
         """
         return set(self._dependency_dict.keys())
 
@@ -116,6 +152,18 @@ class DependencyTracker:
         Add a bear-dependency to another bear manually.
 
         This function does not check for circular dependencies.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.get_dependants(0)
+        {1, 2}
+        >>> tracker.get_dependencies(1)
+        {0}
+        >>> tracker.get_dependencies(2)
+        {0}
+        >>> tracker.get_dependencies(3)
+        set()
 
         :param dependency:
             The bear that is the dependency.
@@ -135,6 +183,19 @@ class DependencyTracker:
         bear. The method deletes this bear from the list of dependencies of
         each bear in the dependency dictionary. It returns the bears which
         have all of its dependencies resolved.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(0, 2)
+        >>> tracker.add(2, 3)
+        >>> tracker.resolve(0)
+        {1, 2}
+        >>> tracker.get_dependants(0)
+        set()
+        >>> tracker.resolve(2)
+        {3}
+        >>> tracker.get_dependants(2)
+        set()
 
         :param dependency:
             The dependency.
@@ -179,6 +240,14 @@ class DependencyTracker:
         """
         Checks whether there are circular dependency conflicts.
 
+        >>> tracker = DependencyTracker()
+        >>> tracker.add(0, 1)
+        >>> tracker.add(1, 0)
+        >>> tracker.check_circular_dependencies()
+        Traceback (most recent call last):
+         ...
+        coalib.core.CircularDependencyError.CircularDependencyError: ...
+
         :raises CircularDependencyError:
             Raised on circular dependency conflicts.
         """
@@ -188,4 +257,22 @@ class DependencyTracker:
 
     @property
     def all_dependencies_resolved(self):
+        """
+        Checks whether all dependencies in this ``DependencyTracker`` instance
+        are resolved.
+
+        >>> tracker = DependencyTracker()
+        >>> tracker.all_dependencies_resolved
+        True
+        >>> tracker.add(0, 1)
+        >>> tracker.all_dependencies_resolved
+        False
+        >>> tracker.resolve(0)
+        {1}
+        >>> tracker.all_dependencies_resolved
+        True
+
+        :return:
+            ``True`` when all dependencies resolved, ``False`` if not.
+        """
         return len(self._dependency_dict) == 0

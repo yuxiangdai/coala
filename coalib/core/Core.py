@@ -47,10 +47,9 @@ def schedule_bears(bears,
     for bear in bears:
         if dependency_tracker.get_dependencies(bear):  # pragma: no cover
             logging.warning(
-                "Dependencies for '{}' not yet resolved, holding back. This "
+                "Dependencies for {!r} not yet resolved, holding back. This "
                 "should not happen, the dependency tracking system should be "
-                "smarter.".format(bear.name))
-            # TODO More information? like section instance and name?
+                "smarter.".format(bear))
         else:
             tasks = {
                 event_loop.run_in_executor(
