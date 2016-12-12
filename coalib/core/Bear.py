@@ -220,7 +220,9 @@ class Bear(LogPrinterMixin):
         :return:
             A list of results received from dependency bears.
         """
-        return self._dependency_results
+        # TODO this should be made readonly, but shall we use directly tuple
+        # TODO    instead of a list?
+        return tuple(self._dependency_results)
 
     def log_message(self, log_message, timestamp=None, **kwargs):
         level_map = {LOG_LEVEL.DEBUG: logging.DEBUG,

@@ -100,16 +100,25 @@ def finish_task(bear,
     # FIXME   significantly. It should be possible to schedule new Python
     # FIXME   Threads on the given event_loop and process the callback there.
     try:
-        # TODO Oh shit what if a dependency bear crashes?
+        results = task.result()
 
-        for result in task.result():
+        # TODO Test this!
+        for dependant in dependency_tracker.get_dependants(bear):
+            dependant.add_dependency_results(results)
+
+        for result in results:
             result_callback(result)
     except Exception as ex:
         logging.error('An exception was thrown during bear execution or '
                       'result-handling.', exc_info=ex)
 
-        # Unschedule dependant bears.
-        # TODO Log which bears where unscheduled!
+        # TODO Test this!!!
+        # Unschedule/resolve dependant bears, as these can't run any more.
+        dependants = dependency_tracker.get_dependants(bear)
+        logging.debug('Following dependant bears were unscheduled: ' +
+                      ', '.join(dependants))
+        for dependant in dependants:
+            dependency_tracker.resolve(dependant)
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
