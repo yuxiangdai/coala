@@ -214,7 +214,7 @@ def initialize_dependencies(bears):
 
     # Get all bears that have no further dependencies and shall be
     # scheduled additionally.
-    for dependency in dependency_tracker.get_all_dependencies():
+    for dependency in dependency_tracker.dependencies:
         if not dependency_tracker.get_dependencies(dependency):
             bears.add(dependency)
 

@@ -129,7 +129,7 @@ class CoreTest(unittest.TestCase):
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_b, bear_c})
 
-        self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
+        self.assertEqual(dependency_tracker.dependants, {bear_c})
         self.assertEqual(dependency_tracker.get_dependencies(bear_c), {bear_b})
 
         self.assertEqual(bears_to_schedule, {bear_b})
@@ -147,8 +147,8 @@ class CoreTest(unittest.TestCase):
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_b, bear_c})
 
-        self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
-        dependencies = dependency_tracker.get_all_dependencies()
+        self.assertEqual(dependency_tracker.dependants, {bear_c})
+        dependencies = dependency_tracker.dependencies
         self.assertEqual(len(dependencies), 1)
         dependency = dependencies.pop()
         self.assertIsInstance(dependency, BearB)
@@ -260,8 +260,8 @@ class CoreTest(unittest.TestCase):
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_b, bear_c})
 
-        self.assertEqual(dependency_tracker.get_all_dependants(), {bear_c})
-        dependencies = dependency_tracker.get_all_dependencies()
+        self.assertEqual(dependency_tracker.dependants, {bear_c})
+        dependencies = dependency_tracker.dependencies
         self.assertEqual(len(dependencies), 1)
         dependency = dependencies.pop()
         self.assertIsInstance(dependency, BearB)
