@@ -5,7 +5,43 @@ from coalib.core.Graphs import traverse_graph
 
 # TODO Make doctests and delete unnecessary tests in test file is possible
 class DependencyTracker:
-    # TODO docstring here
+    """
+    A ``DependencyTracker`` allows to register and manage dependencies between
+    objects.
+
+    This class uses a directed graph to track relations.
+
+    Add a dependency relation between two objects:
+
+    >>> object1 = object()
+    >>> object2 = object()
+    >>> tracker = DependencyTracker()
+    >>> tracker.add(object2, object1)
+
+    This would define that ``object1`` is dependent from ``object2``.
+
+    If you define that ``object2`` has its dependency duty fulfilled, you can
+    resolve it:
+
+    >>> resolved = tracker.resolve(object2)
+    >>> resolved  # +ELLIPSIS
+    {<object object at ...>}
+    >>> resolved_object = resolved.pop()
+    >>> resolved_object is object1
+    True
+
+    This returns all objects that are now freed, meaning they have no
+    dependencies any more.
+
+    >>> object3 = object()
+    >>> tracker.add(object2, object1)
+    >>> tracker.add(object3, object1)
+    >>> tracker.resolve(object2)
+    set()
+    >>> tracker.resolve(object3)
+    {<object object at ...>}
+
+    """
 
     def __init__(self):
         self._dependency_dict = {}

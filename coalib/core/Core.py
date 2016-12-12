@@ -9,7 +9,6 @@ from coalib.core.DependencyTracker import DependencyTracker
 from coalib.core.Graphs import traverse_graph
 
 
-# TODO dependant vs dependent
 # TODO more logging messages?
 
 def get_cpu_count():
@@ -120,7 +119,7 @@ def finish_task(bear,
                       exc_info=ex)
 
         # TODO Test this!!!
-        # Unschedule/resolve dependant bears, as these can't run any more.
+        # Unschedule/resolve dependent bears, as these can't run any more.
         dependants = dependency_tracker.get_dependants(bear)
         logging.debug('Following dependent bears were unscheduled: ' +
                       ', '.join(dependants))

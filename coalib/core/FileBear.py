@@ -17,7 +17,6 @@ class FileBear(Bear):
         """
         Bear.__init__(section, file_dict)
 
-        # TODO, especially what about Dependency results?
         # May raise RuntimeError so bear doesn't get executed on invalid params
         self._kwargs = get_kwargs_for_function(self.analyze, section)
 
