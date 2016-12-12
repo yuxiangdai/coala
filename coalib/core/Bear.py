@@ -183,7 +183,7 @@ class Bear(LogPrinterMixin):
 
         # TODO Maybe a dict mapping bears to their results for easier access?
         # TODO   As normally you need to filter them always for bear types...
-        self._dependency_results = []
+        self._dependency_results = frozenset()
 
         self.setup_dependencies()
         cp = type(self).check_prerequisites()
@@ -196,6 +196,8 @@ class Bear(LogPrinterMixin):
             logging.error(error_string)
             raise RuntimeError(error_string)
 
+    # TODO Add method to reset dependency results?
+
     def add_dependency_results(self, dependency_results):
         """
         Adds dependency results to this instance.
@@ -206,8 +208,7 @@ class Bear(LogPrinterMixin):
         :param dependency_results:
             The results to add.
         """
-        for result in dependency_results:
-            self._dependency_results.append(result)
+        self._dependency_results |= frozenset(dependency_results)
 
     @property
     def dependency_results(self):
@@ -220,9 +221,7 @@ class Bear(LogPrinterMixin):
         :return:
             A list of results received from dependency bears.
         """
-        # TODO this should be made readonly, but shall we use directly tuple
-        # TODO    instead of a list?
-        return tuple(self._dependency_results)
+        return self._dependency_results
 
     def log_message(self, log_message, timestamp=None, **kwargs):
         level_map = {LOG_LEVEL.DEBUG: logging.DEBUG,
