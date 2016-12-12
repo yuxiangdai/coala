@@ -9,6 +9,7 @@ from coalib.core.DependencyTracker import DependencyTracker
 from coalib.core.Graphs import traverse_graph
 
 
+# TODO dependant vs dependent
 # TODO more logging messages?
 
 def get_cpu_count():
@@ -103,19 +104,25 @@ def finish_task(bear,
             dependant.add_dependency_results(results)
 
         for result in results:
-            # FIXME Long operations on the result-callback do block the
-            # FIXME   scheduler significantly. It should be possible to
-            # FIXME   schedule new Python Threads on the given event_loop and
-            # FIXME   process the callback there.
-            result_callback(result)
+            try:
+                # FIXME Long operations on the result-callback do block the
+                # FIXME   scheduler significantly. It should be possible to
+                # FIXME   schedule new Python Threads on the given event_loop
+                # FIXME   and process the callback there.
+                result_callback(result)
+            except Exception as ex:
+                logging.error(
+                    'An exception was thrown during result-handling.',
+                    exc_info=ex)
+
     except Exception as ex:
-        logging.error('An exception was thrown during bear execution or '
-                      'result-handling.', exc_info=ex)
+        logging.error('An exception was thrown during bear execution.',
+                      exc_info=ex)
 
         # TODO Test this!!!
         # Unschedule/resolve dependant bears, as these can't run any more.
         dependants = dependency_tracker.get_dependants(bear)
-        logging.debug('Following dependant bears were unscheduled: ' +
+        logging.debug('Following dependent bears were unscheduled: ' +
                       ', '.join(dependants))
         for dependant in dependants:
             dependency_tracker.resolve(dependant)
