@@ -183,7 +183,7 @@ class Bear(LogPrinterMixin):
 
         # TODO Maybe a dict mapping bears to their results for easier access?
         # TODO   As normally you need to filter them always for bear types...
-        self._dependency_results = frozenset()
+        self._dependency_results = tuple()
 
         self.setup_dependencies()
         cp = type(self).check_prerequisites()
@@ -208,7 +208,7 @@ class Bear(LogPrinterMixin):
         :param dependency_results:
             The results to add.
         """
-        self._dependency_results |= frozenset(dependency_results)
+        self._dependency_results += tuple(dependency_results)
 
     @property
     def dependency_results(self):

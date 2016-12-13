@@ -10,10 +10,10 @@ from coala_utils.decorators import generate_eq
 # Classes are hashed by instance, so they can be placed inside a set, compared
 # to normal tuples which hash their contents. This allows to pass the file-dict
 # into results.
-@generate_eq('bear_name', 'section_name', 'file_dict')
+@generate_eq('bear', 'section_name', 'file_dict')
 class TestResult:
-    def __init__(self, bear_name, section_name, file_dict):
-        self.bear_name = bear_name
+    def __init__(self, bear, section_name, file_dict):
+        self.bear = bear
         self.section_name = section_name
         self.file_dict = file_dict
 
@@ -21,10 +21,10 @@ class TestResult:
 class TestBear(Bear):
     DEPENDENCIES = set()
 
-    def analyze(self, bear_name, section_name, file_dict):
+    def analyze(self, bear, section_name, file_dict):
         # The bear can in fact return everything (so it's not bound to actual
         # `Result`s), but it must be at least an iterable.
-        return [TestResult(bear_name, section_name, file_dict)]
+        return [TestResult(bear, section_name, file_dict)]
 
     def generate_tasks(self):
         # Choose single task parallelization for simplicity. Also use the
@@ -32,7 +32,7 @@ class TestBear(Bear):
         # operations on tests do not succeed on them due to the pickling of
         # multiprocessing to transfer objects to the other process, which
         # instantiates a new section on each transfer.
-        return ((self.name, self.section.name, self.file_dict), {}),
+        return ((self, self.section.name, self.file_dict), {}),
 
 
 class MultiParallelizationBear(Bear):
@@ -71,7 +71,7 @@ class BearE_NeedsAD(TestBear):
 
 
 class FailingBear(TestBear):
-    def analyze(self, bear_name, section_name, file_dict):
+    def analyze(self, bear, section_name, file_dict):
         raise ValueError
 
 
@@ -301,8 +301,10 @@ class CoreTest(unittest.TestCase):
 
         results = self.execute_run({bear_a})
 
-        self.assertEqual(results,
-                         [TestResult('BearA', section.name, filedict)])
+        self.assertEqual(
+            list((result.bear.name, result.section_name, result.file_dict)
+                 for result in results),
+            [('BearA', section.name, filedict)])
 
     def test_run2(self):
         # Run a complete dependency chain.
@@ -318,15 +320,30 @@ class CoreTest(unittest.TestCase):
             self.assertEqual(result.file_dict, filedict)
 
         # The last bear executed has to be BearE_NeedsAD.
-        self.assertEqual(results[-1].bear_name, bear_e.name)
+        self.assertEqual(results[-1].bear.name, bear_e.name)
 
-        bear_names_executed = {result.bear_name for result in results}
+        bear_names_executed = {result.bear.name for result in results}
 
         self.assertEqual(len(bear_names_executed), len(results))
         self.assertEqual(
             bear_names_executed,
             {BearE_NeedsAD.name, BearD_NeedsC.name, BearC_NeedsB.name,
              BearA.name, BearB.name})
+
+        # Check dependency results.
+        self.assertEqual(len(bear_e.dependency_results), 2)
+
+        test_results = [
+            (result.bear.name, result.section_name, result.file_dict)
+            for result in bear_e.dependency_results]
+
+        for result in [(BearA.name, section.name, filedict),
+                       (BearD_NeedsC.name, section.name, filedict)]:
+            self.assertIn(result, test_results)
+
+
+
+        # TODO Check all dependency results from every bear.
 
     def test_run3(self):
         # Test exception in result handler. The core needs to retry to invoke
