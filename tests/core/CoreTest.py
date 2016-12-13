@@ -168,6 +168,7 @@ class InitializeDependenciesTest(unittest.TestCase):
 
         bear_a = BearA(section, filedict)
         bear_b = BearB(section, filedict)
+
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_a, bear_b})
 
@@ -339,10 +340,11 @@ class CoreTest(unittest.TestCase):
 
         return results
 
-    def test_run1(self):
+    def test_run_simple(self):
         # Test single bear without dependencies case.
         section = Section('test-section')
         filedict = {}
+
         bear_a = BearA(section, filedict)
 
         results = self.execute_run({bear_a})
@@ -352,10 +354,11 @@ class CoreTest(unittest.TestCase):
                  for result in results),
             [('BearA', section.name, filedict)])
 
-    def test_run2(self):
+    def test_run_complex(self):
         # Run a complete dependency chain.
         section = Section('test-section')
         filedict = {}
+
         bear_e = BearE_NeedsAD(section, filedict)
 
         results = self.execute_run({bear_e})
