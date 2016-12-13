@@ -381,7 +381,7 @@ class CoreTest(unittest.TestCase):
         # Test exception in result handler. The core needs to retry to invoke
         # the handler and then exit correctly if no more results and bears are
         # left.
-        # TODO yield multiple results to test retrial.
+        # TODO yield multiple results to test retrial. Use mock for that.
         bear_a = BearA(Section('test-section'), {})
 
         def on_result(result):
