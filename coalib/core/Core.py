@@ -118,7 +118,6 @@ def finish_task(bear,
         logging.error('An exception was thrown during bear execution.',
                       exc_info=ex)
 
-        # TODO Test this!!!
         # Unschedule/resolve dependent bears, as these can't run any more.
         dependants = dependency_tracker.get_all_dependants(bear)
         for dependant in dependants:
