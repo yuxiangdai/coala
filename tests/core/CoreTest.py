@@ -389,6 +389,8 @@ class CoreTest(unittest.TestCase):
             results,
             [(BearA.name, section.name, filedict)])
 
+        self.assertEqual(bear_a.dependency_results, tuple())
+
     def test_run_complex(self):
         # Run a complete dependency chain.
         section = Section('test-section')
@@ -473,6 +475,7 @@ class CoreTest(unittest.TestCase):
         result_set = set(results)
         self.assertEqual(len(result_set), len(results))
         self.assertEqual(result_set, {0, 1, 2})
+        self.assertEqual(bear.dependency_results, tuple())
         # TODO Test this with dependencies, whether they get resolved
         # TODO   correctly.
 
@@ -493,14 +496,17 @@ class CoreTest(unittest.TestCase):
             results,
             [(BearA.name, section.name, filedict)])
 
+        self.assertEqual(bear_a.dependency_results, tuple())
         self.assertEqual(bear_failing.dependency_results, tuple())
 
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts.
 
     # TODO test dependency result passing, and also try to generate tasks
-    # TODO   dynamically from dependency-results! And test that
-    # TODO `self.dependency_results == None` when no deps provided.
+    # TODO  Try go generate dynamically tasks from dependency-results!
+
+    # TODO Do dependency results work correctly with pickling? As they are
+    # TODO   set in the main thread...
 
     """
     Traceback (most recent call last):
