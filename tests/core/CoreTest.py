@@ -489,12 +489,9 @@ class CoreTest(unittest.TestCase):
         # from bear_a.
         results = self.execute_run({bear_a, bear_failing})
 
-        test_results = [
-            (result.bear.name, result.section_name, result.file_dict)
-            for result in results]
-
-        self.assertEqual(test_results,
-                         [(BearA.name, section.name, filedict)])
+        self.assertTestResultsEqual(
+            results,
+            [(BearA.name, section.name, filedict)])
 
         self.assertEqual(bear_failing.dependency_results, tuple())
 
