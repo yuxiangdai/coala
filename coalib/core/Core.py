@@ -139,7 +139,8 @@ def finish_task(bear,
         if not running_tasks:
             # Check the DependencyTracker additionally for remaining
             # dependencies.
-            if not dependency_tracker.all_dependencies_resolved:
+            resolved = dependency_tracker.all_dependencies_resolved
+            if not resolved:  # pragma: no cover
                 logging.warning('Core finished with run, but it seems some '
                                 'dependencies were unresolved. Ignoring them.')
                 logging.debug(
