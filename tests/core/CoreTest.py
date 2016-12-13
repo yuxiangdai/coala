@@ -18,6 +18,7 @@ class TestResult:
         self.file_dict = file_dict
 
 
+# TODO make the testbear base less cluttered with section name etc?
 class TestBear(Bear):
     DEPENDENCIES = set()
 
@@ -83,15 +84,15 @@ class BearG_NeedsF(TestBear):
     DEPENDENCIES = {BearF_NeedsFailingBear}
 
 
-def get_next_instance(iterable, typ):
+def get_next_instance(typ, iterable):
     """
     Reads all elements in the iterable and returns the first occurrence
     that is an instance of given type.
 
-    :param iterable:
-        The iterable to search in.
     :param typ:
         The type an object shall have.
+    :param iterable:
+        The iterable to search in.
     :return:
         The instance having ``typ`` or ``None`` if not found in
         ``iterable``.
@@ -121,7 +122,7 @@ class InitializeDependenciesTest(unittest.TestCase):
 
         # Test path BearE -> BearA.
         bear_a = get_next_instance(
-            dependency_tracker.get_dependencies(bear_e), BearA)
+            BearA, dependency_tracker.get_dependencies(bear_e))
 
         self.assertIsNotNone(bear_a)
         self.assertIs(bear_a.section, section)
@@ -130,7 +131,7 @@ class InitializeDependenciesTest(unittest.TestCase):
 
         # Test path BearE -> BearD.
         bear_d = get_next_instance(
-            dependency_tracker.get_dependencies(bear_e), BearD_NeedsC)
+            BearD_NeedsC, dependency_tracker.get_dependencies(bear_e))
 
         self.assertIsNotNone(bear_d)
         self.assertIs(bear_d.section, section)
@@ -340,6 +341,41 @@ class CoreTest(unittest.TestCase):
 
         return results
 
+    @staticmethod
+    def get_comparable_results(results):
+        """
+        Transforms an iterable of ``TestResult`` into something comparable.
+
+        Some ``TestResult`` instances returned by ``run`` contain instance
+        values. Due to the ``ProcessPoolExecutor``, objects get pickled,
+        are transferred to the other process and are re-instantiated,
+        effectively changing the id of them. The same happens again on the
+        transfer back in the results, so we need something that can be
+        compared.
+
+        This function extracts relevant values into a tuple, containing::
+
+            (test_result.bear.name,
+             test_result.section_name,
+             test_result.file_dict)
+
+        :param results:
+            The results to transform.
+        :return:
+            Comparable results for tests.
+        """
+        return [(result.bear.name, result.section_name, result.file_dict)
+                for result in results]
+
+    def assertTestResultsEqual(self, real, expected):
+        # TODO docs - especially mention that order does not matter
+        # TODO move that get_comparable_results here into a closure or lambda?
+        comparable_real = self.get_comparable_results(real)
+
+        self.assertEqual(len(comparable_real), len(expected))
+        for result in expected:
+            self.assertIn(result, comparable_real)
+
     def test_run_simple(self):
         # Test single bear without dependencies case.
         section = Section('test-section')
@@ -349,10 +385,9 @@ class CoreTest(unittest.TestCase):
 
         results = self.execute_run({bear_a})
 
-        self.assertEqual(
-            list((result.bear.name, result.section_name, result.file_dict)
-                 for result in results),
-            [('BearA', section.name, filedict)])
+        self.assertTestResultsEqual(
+            results,
+            [(BearA.name, section.name, filedict)])
 
     def test_run_complex(self):
         # Run a complete dependency chain.
@@ -363,70 +398,55 @@ class CoreTest(unittest.TestCase):
 
         results = self.execute_run({bear_e})
 
-        # Test if the section name and filedict are all the same.
-        for result in results:
-            self.assertEqual(result.section_name, section.name)
-            self.assertEqual(result.file_dict, filedict)
+        self.assertTestResultsEqual(
+            results,
+            [(BearA.name, section.name, filedict),
+             (BearB.name, section.name, filedict),
+             (BearC_NeedsB.name, section.name, filedict),
+             (BearD_NeedsC.name, section.name, filedict),
+             (BearE_NeedsAD.name, section.name, filedict)])
 
         # The last bear executed has to be BearE_NeedsAD.
         self.assertEqual(results[-1].bear.name, bear_e.name)
 
-        bear_names_executed = {result.bear.name for result in results}
-
-        self.assertEqual(len(bear_names_executed), len(results))
-        self.assertEqual(
-            bear_names_executed,
-            {BearE_NeedsAD.name, BearD_NeedsC.name, BearC_NeedsB.name,
-             BearA.name, BearB.name})
-
         # Check dependency results.
-        self.assertEqual(len(bear_e.dependency_results), 2)
+        # For BearE.
+        self.assertTestResultsEqual(
+            bear_e.dependency_results,
+            [(BearA.name, section.name, filedict),
+             (BearD_NeedsC.name, section.name, filedict)])
 
-        test_results = [
-            (result.bear.name, result.section_name, result.file_dict)
-            for result in bear_e.dependency_results]
+        # For BearE -> BearA.
+        bear_a = get_next_instance(BearA,
+                                   (result.bear for result in results))
+        self.assertIsNotNone(bear_a)
+        self.assertEqual(bear_a.dependency_results, tuple())
 
-        for result in [(BearA.name, section.name, filedict),
-                       (BearD_NeedsC.name, section.name, filedict)]:
-            self.assertIn(result, test_results)
+        # For BearE -> BearD.
+        bear_d = get_next_instance(BearD_NeedsC,
+                                   (result.bear for result in results))
+        self.assertIsNotNone(bear_d)
 
-        bear_a = next(result.bear
-                      for result in results
-                      if isinstance(result.bear, BearA))
-
-        self.assertEqual(tuple(), bear_a.dependency_results)
-
-        bear_d = next(result.bear
-                      for result in results
-                      if isinstance(result.bear, BearD_NeedsC))
-
-        test_results = [
-            (result.bear.name, result.section_name, result.file_dict)
-            for result in bear_d.dependency_results]
-
-        self.assertEqual(
-            test_results,
+        self.assertTestResultsEqual(
+            bear_d.dependency_results,
             [(BearC_NeedsB.name, section.name, filedict)])
 
-        bear_c = next(result.bear
-                      for result in results
-                      if isinstance(result.bear, BearC_NeedsB))
+        # For BearE -> BearD -> BearC
+        bear_c = get_next_instance(BearC_NeedsB,
+                                   (result.bear for result in results))
+        self.assertIsNotNone(bear_c)
 
-        test_results = [
-            (result.bear.name, result.section_name, result.file_dict)
-            for result in bear_c.dependency_results]
-
-        self.assertEqual(
-            test_results,
+        self.assertTestResultsEqual(
+            bear_c.dependency_results,
             [(BearB.name, section.name, filedict)])
 
-        bear_b = next(result.bear
-                      for result in results
-                      if isinstance(result.bear, BearB))
+        # For BearE -> BearD -> BearC -> BearB.
+        bear_b = get_next_instance(BearB,
+                                   (result.bear for result in results))
+        self.assertIsNotNone(bear_b)
+        self.assertEqual(bear_b.dependency_results, tuple())
 
-        self.assertEqual(tuple(), bear_b.dependency_results)
-
-    def test_run3(self):
+    def test_run_result_handler_exception(self):
         # Test exception in result handler. The core needs to retry to invoke
         # the handler and then exit correctly if no more results and bears are
         # left.
@@ -438,12 +458,12 @@ class CoreTest(unittest.TestCase):
 
         run({bear_a}, on_result)
 
-    def test_run4(self):
+    def test_run_bear_exception(self):
         # Test exception in bear. Core needs to shutdown directly and not wait
         # forever.
         self.execute_run({FailingBear(Section('test-section'), {})})
 
-    def test_run5(self):
+    def test_run_bear_with_multiple_tasks(self):
         # Test when bear is not completely finished because it has multiple
         # tasks.
         bear = MultiParallelizationBear(Section('test-section'), {})
@@ -456,7 +476,7 @@ class CoreTest(unittest.TestCase):
         # TODO Test this with dependencies, whether they get resolved
         # TODO   correctly.
 
-    def test_run6(self):
+    def test_run_bear_exception_with_dependencies(self):
         # Test when bear with dependants crashes. Dependent bears need to be
         # unscheduled and remaining non-related bears shall continue execution.
         section = Section('test-section')
