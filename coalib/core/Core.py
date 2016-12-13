@@ -120,11 +120,11 @@ def finish_task(bear,
 
         # TODO Test this!!!
         # Unschedule/resolve dependent bears, as these can't run any more.
-        dependants = dependency_tracker.get_dependants(bear)
-        logging.debug('Following dependent bears were unscheduled: ' +
-                      ', '.join(dependants))
+        dependants = dependency_tracker.get_all_dependants(bear)
         for dependant in dependants:
             dependency_tracker.resolve(dependant)
+        logging.debug('Following dependent bears were unscheduled: ' +
+                      ', '.join(dependants))
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:

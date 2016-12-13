@@ -75,6 +75,10 @@ class FailingBear(TestBear):
         raise ValueError
 
 
+class Bear_NeedsFailingBear(TestBear):
+    DEPENDENCIES = {FailingBear}
+
+
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
         # General test which makes use of the full dependency chain from the
@@ -410,8 +414,24 @@ class CoreTest(unittest.TestCase):
     def test_run6(self):
         # Test when bear with dependants crashes. Dependent bears need to be
         # unscheduled and remaining non-related bears shall continue execution.
-        pass
-        # TODO
+        section = Section('test-section')
+        filedict = {}
+
+        bear_a = BearA(section, filedict)
+        bear_failing = Bear_NeedsFailingBear(section, filedict)
+
+        # bear_failing's dependency will fail, so there should only be results
+        # from bear_a.
+        results = self.execute_run({bear_a, bear_failing})
+
+        test_results = [
+            (result.bear.name, result.section_name, result.file_dict)
+            for result in results]
+
+        self.assertEqual(test_results,
+                         [(BearA.name, section.name, filedict)])
+
+        self.assertEqual(bear_failing.dependency_results, tuple())
 
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts.
@@ -419,3 +439,17 @@ class CoreTest(unittest.TestCase):
     # TODO test dependency result passing, and also try to generate tasks
     # TODO   dynamically from dependency-results! And test that
     # TODO `self.dependency_results == None` when no deps provided.
+
+    """
+    Traceback (most recent call last):
+  File "/usr/lib64/python3.5/multiprocessing/queues.py", line 241, in _feed
+    obj = ForkingPickler.dumps(obj)
+  File "/usr/lib64/python3.5/multiprocessing/reduction.py", line 50, in dumps
+    cls(buf, protocol).dump(obj)
+  AttributeError: Can't pickle local object
+    'CoreTest.test_run6.<locals>.FailingBear'
+    """
+    # TODO BUG -> Shouldn't this happen on the main thread? why does the core
+    # TODO   block then forever? Huh, when redefining classes, they can't be
+    # TODO   pickled any more... interesting... still unpicklibility shall not
+    # TODO   hang up the core^^
