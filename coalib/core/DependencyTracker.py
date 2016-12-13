@@ -183,6 +183,7 @@ class DependencyTracker:
         """
         return set(self._dependency_dict.keys())
 
+    # TODO Use that in tests^^
     def __iter__(self):
         """
         Returns an iterator that iterates over all dependency relations.
