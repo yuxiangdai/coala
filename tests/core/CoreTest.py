@@ -86,7 +86,7 @@ class BearG_NeedsF(TestBear):
 class CoreTest(unittest.TestCase):
     def test_initialize_dependencies1(self):
         # General test which makes use of the full dependency chain from the
-        # defined above.
+        # defined classes above.
         bear_e = BearE_NeedsAD(Section('test-section'), {})
         dependency_tracker, bears_to_schedule = initialize_dependencies(
             {bear_e})
