@@ -341,7 +341,23 @@ class CoreTest(unittest.TestCase):
                        (BearD_NeedsC.name, section.name, filedict)]:
             self.assertIn(result, test_results)
 
+        bear_a = next(result.bear
+                      for result in results
+                      if isinstance(result.bear, BearA))
 
+        self.assertEqual(tuple(), bear_a.dependency_results)
+
+        bear_d = next(result.bear
+                      for result in results
+                      if isinstance(result.bear, BearD_NeedsC))
+
+        test_results = [
+            (result.bear.name, result.section_name, result.file_dict)
+            for result in bear_d.dependency_results]
+
+        self.assertEqual(
+            test_results,
+            [(BearC_NeedsB.name, section.name, filedict)])
 
         # TODO Check all dependency results from every bear.
 
