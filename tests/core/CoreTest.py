@@ -75,8 +75,12 @@ class FailingBear(TestBear):
         raise ValueError
 
 
-class Bear_NeedsFailingBear(TestBear):
+class BearF_NeedsFailingBear(TestBear):
     DEPENDENCIES = {FailingBear}
+
+
+class BearG_NeedsF(TestBear):
+    DEPENDENCIES = {BearF_NeedsFailingBear}
 
 
 class CoreTest(unittest.TestCase):
@@ -418,7 +422,7 @@ class CoreTest(unittest.TestCase):
         filedict = {}
 
         bear_a = BearA(section, filedict)
-        bear_failing = Bear_NeedsFailingBear(section, filedict)
+        bear_failing = BearG_NeedsF(section, filedict)
 
         # bear_failing's dependency will fail, so there should only be results
         # from bear_a.
@@ -453,3 +457,5 @@ class CoreTest(unittest.TestCase):
     # TODO   block then forever? Huh, when redefining classes, they can't be
     # TODO   pickled any more... interesting... still unpicklibility shall not
     # TODO   hang up the core^^
+
+    # TODO test that get_all_dependants() is better than get_dependants()
