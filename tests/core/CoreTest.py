@@ -359,7 +359,23 @@ class CoreTest(unittest.TestCase):
             test_results,
             [(BearC_NeedsB.name, section.name, filedict)])
 
-        # TODO Check all dependency results from every bear.
+        bear_c = next(result.bear
+                      for result in results
+                      if isinstance(result.bear, BearC_NeedsB))
+
+        test_results = [
+            (result.bear.name, result.section_name, result.file_dict)
+            for result in bear_c.dependency_results]
+
+        self.assertEqual(
+            test_results,
+            [(BearB.name, section.name, filedict)])
+
+        bear_b = next(result.bear
+                      for result in results
+                      if isinstance(result.bear, BearB))
+
+        self.assertEqual(tuple(), bear_b.dependency_results)
 
     def test_run3(self):
         # Test exception in result handler. The core needs to retry to invoke
