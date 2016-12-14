@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 from coalib.settings.Section import Section
@@ -334,6 +335,9 @@ class InitializeDependenciesTest(unittest.TestCase):
 
 
 class CoreTest(unittest.TestCase):
+    def setUp(self):
+        logging.getLogger().setLevel(logging.DEBUG)
+
     @staticmethod
     def execute_run(bears):
         results = []
