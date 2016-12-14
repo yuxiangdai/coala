@@ -47,9 +47,9 @@ def schedule_bears(bears,
     for bear in bears:
         if dependency_tracker.get_dependencies(bear):  # pragma: no cover
             logging.warning(
-                "Dependencies for {!r} not yet resolved, holding back. This "
-                "should not happen, the dependency tracking system should be "
-                "smarter.".format(bear))
+                'Dependencies for {!r} not yet resolved, holding back. This '
+                'should not happen, the dependency tracking system should be '
+                'smarter.'.format(bear))
         else:
             tasks = {
                 event_loop.run_in_executor(
@@ -63,7 +63,7 @@ def schedule_bears(bears,
                     finish_task, bear, result_callback, dependency_tracker,
                     running_tasks, event_loop, executor))
 
-            logging.debug("Scheduled '{}' (tasks: {}).".format(bear.name,
+            logging.debug("Scheduled {!r} (tasks: {}).".format(bear,
                                                                len(tasks)))
 
 
@@ -123,7 +123,7 @@ def finish_task(bear,
         for dependant in dependants:
             dependency_tracker.resolve(dependant)
         logging.debug('Following dependent bears were unscheduled: ' +
-                      ', '.join(dependants))
+                      ', '.join(repr(dependant) for dependant in dependants))
     finally:
         running_tasks[bear].remove(task)
         if not running_tasks[bear]:
@@ -144,9 +144,9 @@ def finish_task(bear,
                 logging.warning('Core finished with run, but it seems some '
                                 'dependencies were unresolved. Ignoring them.')
                 logging.debug(
-                    'Following dependencies are unresolved: ' +
-                    ', '.join(dependency + ' -> ' + dependant
-                              for dependency, dependant in dependency_tracker))
+                    'Following dependencies are unresolved: ' + ', '.join(
+                        repr(dependant) + ' dependent on ' + repr(dependency)
+                        for dependency, dependant in dependency_tracker))
 
             event_loop.stop()
 

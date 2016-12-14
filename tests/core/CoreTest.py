@@ -84,6 +84,10 @@ class BearG_NeedsF(TestBear):
     DEPENDENCIES = {BearF_NeedsFailingBear}
 
 
+class BearH_NeedsG(TestBear):
+    DEPENDENCIES = {BearG_NeedsF}
+
+
 def get_next_instance(typ, iterable):
     """
     Reads all elements in the iterable and returns the first occurrence
@@ -486,7 +490,7 @@ class CoreTest(unittest.TestCase):
         filedict = {}
 
         bear_a = BearA(section, filedict)
-        bear_failing = BearG_NeedsF(section, filedict)
+        bear_failing = BearH_NeedsG(section, filedict)
 
         # bear_failing's dependency will fail, so there should only be results
         # from bear_a.
