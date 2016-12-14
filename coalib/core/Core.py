@@ -9,8 +9,6 @@ from coalib.core.DependencyTracker import DependencyTracker
 from coalib.core.Graphs import traverse_graph
 
 
-# TODO more logging messages?
-
 def get_cpu_count():
     try:
         return multiprocessing.cpu_count()
@@ -141,12 +139,11 @@ def finish_task(bear,
             # dependencies.
             resolved = dependency_tracker.all_dependencies_resolved
             if not resolved:  # pragma: no cover
-                logging.warning('Core finished with run, but it seems some '
-                                'dependencies were unresolved. Ignoring them.')
-                logging.debug(
-                    'Following dependencies are unresolved: ' + ', '.join(
+                logging.warning(
+                    'Core finished with run, but it seems some dependencies '
+                    'were unresolved: {}. Ignoring them.'.format(', '.join(
                         repr(dependant) + ' dependent on ' + repr(dependency)
-                        for dependency, dependant in dependency_tracker))
+                        for dependency, dependant in dependency_tracker)))
 
             event_loop.stop()
 
