@@ -372,10 +372,12 @@ class Bear(LogPrinterMixin):
         """
         return partial(Result.from_values, self)
 
+    # TODO Rename result.origin to result.bear?
+
     def execute_task(self, args, kwargs):
         # TODO Docs -> mention that here items are precollected into a list,
-        # TODO   as async stuff with generators which we usually use in
-        # TODO   `analyze` don't work.
+        # TODO   as async stuff with generators - which we usually use in
+        # TODO   `analyze` - don't work.
         return list(self.analyze(*args, **kwargs))
 
     def analyze(self, *args, **kwargs):
