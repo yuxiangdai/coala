@@ -112,9 +112,16 @@ def finish_task(bear,
                     'An exception was thrown during result-handling.',
                     exc_info=ex)
 
+                # TODO Exceptions: Display the traceback of the bear interior
+                # TODO   only, not from the event loop to make error tracing
+                # TODO   easier.
+
     except Exception as ex:
         logging.error('An exception was thrown during bear execution.',
                       exc_info=ex)
+
+        # TODO Exceptions: Display the traceback of the bear interior only,
+        # TODO   not from the event loop to make error tracing easier.
 
         # Unschedule/resolve dependent bears, as these can't run any more.
         dependants = dependency_tracker.get_all_dependants(bear)
