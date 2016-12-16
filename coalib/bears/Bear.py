@@ -21,6 +21,7 @@ from coalib.settings.Section import Section
 from coalib.settings.ConfigurationGathering import get_config_directory
 
 
+# TODO Deprecate this bear and integrate into new core.
 class Bear(Printer, LogPrinterMixin):
     """
     A bear contains the actual subroutine that is responsible for checking
