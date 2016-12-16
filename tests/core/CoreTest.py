@@ -13,6 +13,7 @@ from coala_utils.decorators import generate_eq
 # into results.
 @generate_eq('bear', 'section_name', 'file_dict')
 class TestResult:
+
     def __init__(self, bear, section_name, file_dict):
         self.bear = bear
         self.section_name = section_name
@@ -73,6 +74,7 @@ class BearE_NeedsAD(TestBear):
 
 
 class FailingBear(TestBear):
+
     def analyze(self, bear, section_name, file_dict):
         raise ValueError
 
@@ -109,6 +111,7 @@ def get_next_instance(typ, iterable):
 
 
 class InitializeDependenciesTest(unittest.TestCase):
+
     def test_multi_dependencies(self):
         # General test which makes use of the full dependency chain from the
         # defined classes above.
@@ -335,6 +338,7 @@ class InitializeDependenciesTest(unittest.TestCase):
 
 
 class CoreTest(unittest.TestCase):
+
     def setUp(self):
         logging.getLogger().setLevel(logging.DEBUG)
 

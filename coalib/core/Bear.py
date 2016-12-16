@@ -389,8 +389,8 @@ class Bear(LogPrinterMixin):
         :return:
             An iterable of results.
         """
-        raise NotImplementedError("This function has to be implemented for a "
-                                  "runnable bear.")
+        raise NotImplementedError('This function has to be implemented for a '
+                                  'runnable bear.')
 
     def generate_tasks(self):
         """

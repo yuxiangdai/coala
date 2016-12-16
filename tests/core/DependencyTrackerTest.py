@@ -5,6 +5,7 @@ from coalib.core.DependencyTracker import DependencyTracker
 
 
 class DependencyTrackerTest(unittest.TestCase):
+
     def test_check_circular_dependencies(self):
         uut = DependencyTracker()
         uut.add(0, 1)

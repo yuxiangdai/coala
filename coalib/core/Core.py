@@ -61,7 +61,7 @@ def schedule_bears(bears,
                     finish_task, bear, result_callback, dependency_tracker,
                     running_tasks, event_loop, executor))
 
-            logging.debug("Scheduled {!r} (tasks: {}).".format(bear,
+            logging.debug('Scheduled {!r} (tasks: {}).'.format(bear,
                                                                len(tasks)))
 
 
