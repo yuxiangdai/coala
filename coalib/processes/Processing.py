@@ -2,17 +2,10 @@ from coalib.core.Core import run
 
 from itertools import chain
 import multiprocessing
-import os
-import platform
-import queue
-import subprocess
 
 from coalib.collecting.Collectors import collect_files
 from coala_utils.string_processing.StringConverter import StringConverter
 from coalib.output.printers.LOG_LEVEL import LOG_LEVEL
-from coalib.processes.BearRunning import run
-from coalib.processes.CONTROL_ELEMENT import CONTROL_ELEMENT
-from coalib.processes.LogPrinterThread import LogPrinterThread
 from coalib.results.Result import Result
 from coalib.results.result_actions.ApplyPatchAction import ApplyPatchAction
 from coalib.results.result_actions.PrintDebugMessageAction import (
@@ -27,6 +20,7 @@ from coalib.parsing.Globbing import fnmatch
 ACTIONS = [ApplyPatchAction,
            PrintDebugMessageAction,
            ShowPatchAction]
+
 
 def get_default_actions(section):
     """
@@ -294,67 +288,6 @@ def load_files():
                  if filename in complete_file_dict}
 
     return file_dict
-
-
-def instantiate_processes(bears,
-                          section,
-                          job_count,
-                          cache,
-                          log_printer,
-                          console_printer):
-    """
-    Instantiate the number of processes that will run bears which will be
-    responsible for running bears in a multiprocessing environment.
-
-    :param section:          The section the bears belong to.
-    :param local_bear_list:  List of local bears belonging to the section.
-    :param global_bear_list: List of global bears belonging to the section.
-    :param job_count:        Max number of processes to create.
-    :param cache:            An instance of ``misc.Caching.FileCache`` to use as
-                             a file cache buffer.
-    :param log_printer:      The log printer to warn to.
-    :param console_printer:  Object to print messages on the console.
-    :return:                 A tuple containing a list of processes,
-                             and the arguments passed to each process which are
-                             the same for each object.
-    """
-    # TODO
-    file_dict = load_files()
-
-    manager = multiprocessing.Manager()
-    global_bear_queue = multiprocessing.Queue()
-    filename_queue = multiprocessing.Queue()
-    local_result_dict = manager.dict()
-    global_result_dict = manager.dict()
-    message_queue = multiprocessing.Queue()
-    control_queue = multiprocessing.Queue()
-
-    bear_runner_args = {'file_name_queue': filename_queue,
-                        'local_bear_list': local_bear_list,
-                        'global_bear_list': global_bear_list,
-                        'global_bear_queue': global_bear_queue,
-                        'file_dict': file_dict,
-                        'local_result_dict': local_result_dict,
-                        'global_result_dict': global_result_dict,
-                        'message_queue': message_queue,
-                        'control_queue': control_queue,
-                        'timeout': 0.1}
-
-    bears = instantiate_bears(bears, section, complete_file_dict)
-    local_bear_list[:], global_bear_list[:] = instantiate_bears(
-        section,
-        local_bear_list,
-        global_bear_list,
-        complete_file_dict,
-        message_queue,
-        console_printer=console_printer)
-
-    fill_queue(filename_queue, file_dict.keys())
-    fill_queue(global_bear_queue, range(len(global_bear_list)))
-
-    return ([multiprocessing.Process(target=run, kwargs=bear_runner_args)
-             for i in range(job_count)],
-            bear_runner_args)
 
 
 def get_ignore_scope(line, keyword):
