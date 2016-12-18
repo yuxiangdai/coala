@@ -1,7 +1,6 @@
 from coalib.core.Core import run
 
 from itertools import chain
-import multiprocessing
 
 from coalib.collecting.Collectors import collect_files
 from coala_utils.string_processing.StringConverter import StringConverter
