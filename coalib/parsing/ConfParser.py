@@ -154,3 +154,6 @@ class ConfParser:
         self.sections = OrderedDict()
         self.sections['default'] = Section('Default')
         self.__rand_helper = 0
+
+
+from .SimplerConfParser import SimplerConfParser as ConfParser
