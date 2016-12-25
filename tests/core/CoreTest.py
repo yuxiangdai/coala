@@ -542,7 +542,7 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(bear_a.dependency_results, tuple())
         self.assertEqual(bear_failing.dependency_results, tuple())
 
-    def test_run_generate_tasks_with_dependency_results(self):
+    def test_run_generate_tasks_dynamically_with_dependency_results(self):
         section = Section('test-section')
         filedict = {}
 
@@ -554,7 +554,8 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(len(bear.dependency_results), 3)
 
     # TODO Test heavy setup, multiple instances with same and different
-    # TODO   sections/file-dicts.
+    # TODO   sections/file-dicts, dynamic task generation. Generate 100 tasks
+    # TODO   so you use up all CPUs.
 
     """
     Traceback (most recent call last):
