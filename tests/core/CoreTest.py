@@ -555,7 +555,8 @@ class CoreTest(unittest.TestCase):
 
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts, dynamic task generation. Generate 100 tasks
-    # TODO   so you use up all CPUs.
+    # TODO   so you use up all CPUs. Use real world examples for coafiles
+    # TODO   (maybe ours).
 
     """
     Traceback (most recent call last):
