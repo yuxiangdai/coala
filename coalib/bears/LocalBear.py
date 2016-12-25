@@ -1,5 +1,6 @@
+import logging
+
 from coalib.bears.Bear import Bear
-from coalib.bears.BEAR_KIND import BEAR_KIND
 from coalib.settings.FunctionMetadata import FunctionMetadata
 
 
@@ -20,9 +21,11 @@ class LocalBear(Bear):
         certain conditions
     """
 
-    @staticmethod
-    def kind():
-        return BEAR_KIND.LOCAL
+    def __init__(self, section, file_dict):
+        logging.warning('coalib.bears.LocalBear is deprecated, please use '
+                        'coalib.core.FileWiseBear instead.')
+
+        Bear.__init__(self, section, file_dict)
 
     def run(self,
             filename,

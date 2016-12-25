@@ -245,6 +245,21 @@ class Bear(LogPrinterMixin):
             cls.analyze,
             omit={'self', 'dependency_results'})
 
+    # TODO NEEDS TO BE INTEGRATED INTO NEW CORE/BEAR SOMEHOW
+    # TODO + Make this a classproperty, this cries for a classproperty.
+    @classmethod
+    def get_non_optional_settings(cls):
+        """
+        This method has to determine which settings are needed by this bear.
+        The user will be prompted for needed settings that are not available
+        in the settings file so don't include settings where a default value
+        would do.
+
+        :return: A dictionary of needed settings as keys and a tuple of help
+                 text and annotation as values
+        """
+        return cls.get_metadata().non_optional_params
+
     # TODO Shall I keep this??? I think there was a usage for this...
     @classmethod
     def __json__(cls):
@@ -342,7 +357,6 @@ class Bear(LogPrinterMixin):
             A full path to the file ready for you to use!
         """
         filename = join(cls.data_dir, filename)
-        # todo what about curls fetch-if-newer?
         if exists(filename):
             return filename
 
@@ -402,3 +416,11 @@ class Bear(LogPrinterMixin):
             organized in pairs: ``(args-tuple, kwargs-dict)``
         """
         raise NotImplementedError
+
+    # TODO What about logging? Preferably use the logging module...
+
+    # TODO Old bears had a timeout functionality which was set to
+    # TODO  `bear.timeout`. This can be not kept easily, but is partially
+    # TODO  supported in the process executor for all tasks I believe. If it's
+    # TODO  even supported for single tasks, this would be grate, though we
+    # TODO  need to overthink those timeouts again.
