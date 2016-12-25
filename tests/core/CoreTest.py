@@ -399,6 +399,17 @@ class CoreTest(unittest.TestCase):
                 for result in results]
 
     def assertTestResultsEqual(self, real, expected):
+        """
+        Test whether results from ``execute_run`` do equal with the ones given.
+
+        This function does a sequence comparison without order, so for example
+        ``[1, 2, 1]`` and ``[2, 1, 1]`` are considered equal.
+
+        :param real:
+            The actual results.
+        :param expected:
+            The expected results.
+        """
         # TODO docs - especially mention that order does not matter
         # TODO move that get_comparable_results here into a closure or lambda?
         comparable_real = self.get_comparable_results(real)
@@ -406,6 +417,7 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(len(comparable_real), len(expected))
         for result in expected:
             self.assertIn(result, comparable_real)
+            comparable_real.remove(result)
 
     def test_run_simple(self):
         # Test single bear without dependencies case.
