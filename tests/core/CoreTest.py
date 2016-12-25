@@ -126,7 +126,7 @@ class DynamicTaskBear(TestBear):
         return [run_id]
 
     def generate_tasks(self):
-        return (((i,), {}) for i in self.dependency_results)
+        return (((i,), {}) for i in range(len(self.dependency_results)))
 
 
 class InitializeDependenciesTest(unittest.TestCase):
