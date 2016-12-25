@@ -110,6 +110,25 @@ def get_next_instance(typ, iterable):
         return None
 
 
+class MultiResultBear(TestBear):
+    def analyze(self, bear, section_name, file_dict):
+        yield 1
+        yield 2
+
+
+# This bear runs a certain number of tasks dependencing on the number of
+# results yielded from the bears dependent on. In this case it's 3,
+# MultiResultBear yields 2 results, and BearA 1.
+class DynamicTaskBear(TestBear):
+    DEPENDENCIES = {MultiResultBear, BearA}
+
+    def analyze(self, run_id):
+        return [run_id]
+
+    def generate_tasks(self):
+        return (((i,), {}) for i in self.dependency_results)
+
+
 class InitializeDependenciesTest(unittest.TestCase):
 
     def test_multi_dependencies(self):
@@ -511,14 +530,19 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(bear_a.dependency_results, tuple())
         self.assertEqual(bear_failing.dependency_results, tuple())
 
+    def test_run_generate_tasks_with_dependency_results(self):
+        section = Section('test-section')
+        filedict = {}
+
+        bear = DynamicTaskBear(section, filedict)
+
+        results = self.execute_run({bear})
+
+        self.assertEqual(len(results), 6)
+        self.assertEqual(len(bear.dependency_results), 3)
+
     # TODO Test heavy setup, multiple instances with same and different
     # TODO   sections/file-dicts.
-
-    # TODO test dependency result passing, and also try to generate tasks
-    # TODO  Try go generate dynamically tasks from dependency-results!
-
-    # TODO Do dependency results work correctly with pickling? As they are
-    # TODO   set in the main thread...
 
     """
     Traceback (most recent call last):
@@ -533,5 +557,3 @@ class CoreTest(unittest.TestCase):
     # TODO   block then forever? Huh, when redefining classes, they can't be
     # TODO   pickled any more... interesting... still unpicklibility shall not
     # TODO   hang up the core^^
-
-    # TODO test that get_all_dependants() is better than get_dependants()
