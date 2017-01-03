@@ -545,6 +545,18 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(bear_a.dependency_results, tuple())
         self.assertEqual(bear_failing.dependency_results, tuple())
 
+    def test_run_bear_with_0_tasks(self):
+        section = Section('test-section')
+        filedict = {}
+
+        bear = MultiParallelizationBear(section, filedict, tasks_count=0)
+
+        # This shall not block forever.
+        results = self.execute_run({bear})
+
+        self.assertEqual(len(results), 0)
+        self.assertEqual(bear.dependency_results, tuple())
+
     def test_run_generate_tasks_dynamically_with_dependency_results(self):
         section = Section('test-section')
         filedict = {}
