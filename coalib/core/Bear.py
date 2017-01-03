@@ -434,10 +434,8 @@ class Bear(LogPrinterMixin):
         """
         raise NotImplementedError
 
-    # TODO What about logging? Preferably use the logging module...
-
     # TODO Old bears had a timeout functionality which was set to
     # TODO  `bear.timeout`. This can be not kept easily, but is partially
     # TODO  supported in the process executor for all tasks I believe. If it's
-    # TODO  even supported for single tasks, this would be grate, though we
+    # TODO  even supported for single tasks, this would be great, though we
     # TODO  need to overthink those timeouts again.
