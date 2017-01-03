@@ -12,7 +12,6 @@ from coala_utils.decorators import (enforce_signature, classproperty,
 
 from coalib.bears.requirements.PackageRequirement import PackageRequirement
 from coalib.bears.requirements.PipRequirement import PipRequirement
-from coalib.output.printers.LOG_LEVEL import LOG_LEVEL
 from coalib.output.printers.LogPrinter import LogPrinterMixin
 from coalib.results.Result import Result
 from coalib.settings.ConfigurationGathering import get_config_directory
