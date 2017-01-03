@@ -196,7 +196,19 @@ class Bear(LogPrinterMixin):
             logging.error(error_string)
             raise RuntimeError(error_string)
 
-    # TODO Add method to reset dependency results?
+    def reset_dependency_results(self):
+        """
+        Resets all dependency results for this bear.
+
+        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
+        >>> bear.add_dependency_results([1, 2, 3])
+        >>> bear.dependency_results
+        (1, 2, 3)
+        >>> bear.reset_dependency_results()
+        >>> bear.dependency_results
+        ()
+        """
+        self._dependency_results = tuple()
 
     def add_dependency_results(self, dependency_results):
         """
