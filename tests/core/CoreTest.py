@@ -20,7 +20,6 @@ class TestResult:
         self.file_dict = file_dict
 
 
-# TODO make the testbear base less cluttered with section name etc?
 class TestBear(Bear):
     DEPENDENCIES = set()
 
@@ -41,6 +40,10 @@ class TestBear(Bear):
 class MultiParallelizationBear(Bear):
     DEPENDENCIES = set()
 
+    def __init__(self, *args, tasks_count=3, **kwargs):
+        Bear.__init__(self, *args, **kwargs)
+        self.tasks_count = tasks_count
+
     def analyze(self, run_id):
         return [run_id]
 
@@ -50,7 +53,7 @@ class MultiParallelizationBear(Bear):
         # operations on tests do not succeed on them due to the pickling of
         # multiprocessing to transfer objects to the other process, which
         # instantiates a new section on each transfer.
-        return (((i,), {}) for i in range(3))
+        return (((i,), {}) for i in range(self.tasks_count))
 
 
 class BearA(TestBear):
@@ -393,7 +396,7 @@ class CoreTest(unittest.TestCase):
         :param results:
             The results to transform.
         :return:
-            Comparable results for tests.
+            A list of comparable results for tests.
         """
         return [(result.bear.name, result.section_name, result.file_dict)
                 for result in results]
@@ -410,8 +413,6 @@ class CoreTest(unittest.TestCase):
         :param expected:
             The expected results.
         """
-        # TODO docs - especially mention that order does not matter
-        # TODO move that get_comparable_results here into a closure or lambda?
         comparable_real = self.get_comparable_results(real)
 
         self.assertEqual(len(comparable_real), len(expected))
@@ -519,8 +520,6 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(len(result_set), len(results))
         self.assertEqual(result_set, {0, 1, 2})
         self.assertEqual(bear.dependency_results, tuple())
-        # TODO Test this with dependencies, whether they get resolved
-        # TODO   correctly.
 
     def test_run_bear_exception_with_dependencies(self):
         # Test when bear with dependants crashes. Dependent bears need to be
@@ -553,21 +552,17 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(len(results), 6)
         self.assertEqual(len(bear.dependency_results), 3)
 
-    # TODO Test heavy setup, multiple instances with same and different
-    # TODO   sections/file-dicts, dynamic task generation. Generate 100 tasks
-    # TODO   so you use up all CPUs. Use real world examples for coafiles
-    # TODO   (maybe ours).
+    def test_run_heavy_cpu_load(self):
+        section = Section('test-section')
+        filedict = {}
 
-    """
-    Traceback (most recent call last):
-  File "/usr/lib64/python3.5/multiprocessing/queues.py", line 241, in _feed
-    obj = ForkingPickler.dumps(obj)
-  File "/usr/lib64/python3.5/multiprocessing/reduction.py", line 50, in dumps
-    cls(buf, protocol).dump(obj)
-  AttributeError: Can't pickle local object
-    'CoreTest.test_run6.<locals>.FailingBear'
-    """
-    # TODO BUG -> Shouldn't this happen on the main thread? why does the core
-    # TODO   block then forever? Huh, when redefining classes, they can't be
-    # TODO   pickled any more... interesting... still unpicklibility shall not
-    # TODO   hang up the core^^
+        # No normal computer should expose 100 cores at once, so we can test
+        # if the scheduler works properly.
+        bear = MultiParallelizationBear(section, filedict, tasks_count=100)
+
+        results = self.execute_run({bear})
+
+        result_set = set(results)
+        self.assertEqual(len(result_set), len(results))
+        self.assertEqual(result_set, {i for i in range(100)})
+        self.assertEqual(bear.dependency_results, tuple())
