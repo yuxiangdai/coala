@@ -259,7 +259,7 @@ class Bear(LogPrinterMixin):
         """
         return FunctionMetadata.from_function(
             cls.analyze,
-            omit={'self', 'dependency_results'})
+            omit={'self'})
 
     # TODO NEEDS TO BE INTEGRATED INTO NEW CORE/BEAR SOMEHOW
     # TODO + Make this a classproperty, this cries for a classproperty.
