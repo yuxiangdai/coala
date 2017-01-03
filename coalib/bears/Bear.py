@@ -5,6 +5,7 @@ from coalib.bears.requirements.PackageRequirement import PackageRequirement
 from coalib.bears.requirements.PipRequirement import PipRequirement
 from coalib.output.printers.LogPrinter import LogPrinterMixin
 from coalib.output.printers.LOG_LEVEL import LOG_LEVEL_TO_LOGGING_LEVEL
+from coalib.settings.FunctionMetadata import FunctionMetadata
 
 from pyprint.Printer import Printer
 
@@ -123,6 +124,17 @@ class Bear(Bear2, Printer, LogPrinterMixin):
 
         Bear2.__init__(self, *args, **kwargs)
         Printer.__init__(self)
+
+    @classmethod
+    def get_metadata(cls):
+        """
+        :return:
+            Metadata for the run function. However parameters like ``self`` or
+            parameters implicitly used by coala are already removed.
+        """
+        return FunctionMetadata.from_function(
+            cls.run,
+            omit={'self', 'dependency_results'})
 
     # TODO Pass dependency results to run if defined in function signature!
 

@@ -248,20 +248,18 @@ class Bear(LogPrinterMixin):
         """
         return self._dependency_results
 
-    # TODO ?
     @classmethod
     def get_metadata(cls):
         """
         :return:
-            Metadata for the run function. However parameters like ``self`` or
-            parameters implicitly used by coala are already removed.
+            Metadata for the ``analyze`` function extracted from its signature.
+            Excludes parameter ``self``.
         """
         return FunctionMetadata.from_function(
             cls.analyze,
             omit={'self'})
 
-    # TODO NEEDS TO BE INTEGRATED INTO NEW CORE/BEAR SOMEHOW
-    # TODO + Make this a classproperty, this cries for a classproperty.
+    # FIXME Make this a classproperty.
     @classmethod
     def get_non_optional_settings(cls):
         """
@@ -412,10 +410,8 @@ class Bear(LogPrinterMixin):
 
     def analyze(self, *args, **kwargs):
         """
-        Handles the given file.
+        Performs the code analysis.
 
-        :param file_proxy:
-            Object containing filename and contents.
         :return:
             An iterable of results.
         """
@@ -425,7 +421,7 @@ class Bear(LogPrinterMixin):
     def generate_tasks(self):
         """
         This method is responsible for providing the job arguments ``analyze``
-        is called with.
+        gets called with.
 
         :return:
             An iterable containing the positional and keyword arguments

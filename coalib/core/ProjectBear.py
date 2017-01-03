@@ -1,4 +1,5 @@
 from coalib.core.Bear import Bear
+from coalib.settings.FunctionMetadata import FunctionMetadata
 
 
 class ProjectBear(Bear):
@@ -18,8 +19,23 @@ class ProjectBear(Bear):
         """
         Bear.__init__(section, file_dict)
 
-        # May raise RuntimeError so bear doesn't get executed on invalid params
-        self._kwargs = get_kwargs_for_function(self.analyze, section)
+        self._kwargs = self.get_metadata().create_params_from_section(section)
+
+    def execute_task(self, args, kwargs):
+        # To optimize performance a bit and memory usage, we use args and
+        # kwargs from this class instance instead of passing them via the task.
+        return Bear.execute_task(self, (self.file_dict,), self._kwargs)
+
+    @classmethod
+    def get_metadata(cls):
+        """
+        :return:
+            Metadata for the ``analyze`` function extracted from its signature.
+            Excludes parameters ``self`` and ``files``.
+        """
+        return FunctionMetadata.from_function(
+            cls.analyze,
+            omit={'self', 'files'})
 
     def generate_tasks(self):
-        return ((self.file_dict,), self._kwargs),
+        return (tuple(), {}),
