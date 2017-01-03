@@ -355,13 +355,14 @@ class Bear(LogPrinterMixin):
         We can now carelessly query for a neat file that doesn't exist yet:
 
         >>> from os import remove
-        >>> if exists(join(bear.data_dir, "a_file")):
-        ...     remove(join(bear.data_dir, "a_file"))
-        >>> file = bear.download_cached_file("http://gitmate.com/", "a_file")
+        >>> if exists(join(bear.data_dir, 'a_file')):
+        ...     remove(join(bear.data_dir, 'a_file'))
+        >>> file = bear.download_cached_file('http://gitmate.com/', 'a_file')
 
         If we download it again, it'll be much faster as no download occurs:
 
-        >>> newfile = bear.download_cached_file("http://gitmate.com/", "a_file")
+        >>> newfile = bear.download_cached_file(
+        ...     'http://gitmate.com/', 'a_file')
         >>> newfile == file
         True
 
@@ -377,7 +378,7 @@ class Bear(LogPrinterMixin):
             return filename
 
         logging.info('{bearname}: Downloading {filename!r} from {url}.'
-                     .format(filename=filename, bearname=cls.name, url=url))
+                     .format(bearname=cls.name, filename=filename, url=url))
 
         with urlopen(url) as response, open(filename, 'wb') as out_file:
             copyfileobj(response, out_file)
