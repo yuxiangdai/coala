@@ -23,7 +23,8 @@ class ProjectBear(Bear):
 
     def execute_task(self, args, kwargs):
         # To optimize performance a bit and memory usage, we use args and
-        # kwargs from this class instance instead of passing them via the task.
+        # kwargs from this class instance, instead of passing them via the
+        # task.
         return Bear.execute_task(self, (self.file_dict,), self._kwargs)
 
     @classmethod

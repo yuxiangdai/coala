@@ -1,6 +1,7 @@
 import logging
 
 from coalib.bears.Bear import Bear
+from coalib.bears.BEAR_KIND import BEAR_KIND
 
 
 class GlobalBear(Bear):
@@ -21,6 +22,10 @@ class GlobalBear(Bear):
                         'coalib.core.ProjectBear instead.')
 
         Bear.__init__(self, section, file_dict)
+
+    @staticmethod
+    def kind():
+        return BEAR_KIND.GLOBAL
 
     def run(self,
             *args,
