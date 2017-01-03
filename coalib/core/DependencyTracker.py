@@ -98,8 +98,8 @@ class DependencyTracker:
 
     def get_all_dependants(self, dependency):
         """
-        Returns a set of all dependants of the given dependency, even not
-        directly related ones.
+        Returns a set of all dependants of the given dependency, even
+        indirectly related ones.
 
         >>> tracker = DependencyTracker()
         >>> tracker.add(0, 1)
@@ -126,8 +126,8 @@ class DependencyTracker:
 
     def get_all_dependencies(self, dependant):
         """
-        Returns a set of all dependencies of the given dependants, even not
-        directly related ones.
+        Returns a set of all dependencies of the given dependants, even
+        indirectly related ones.
 
         >>> tracker = DependencyTracker()
         >>> tracker.add(0, 1)
