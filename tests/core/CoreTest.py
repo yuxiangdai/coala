@@ -1,5 +1,6 @@
 import logging
 import unittest
+import unittest.mock
 
 from coalib.settings.Section import Section
 from coalib.core.Bear import Bear
@@ -40,7 +41,7 @@ class TestBear(Bear):
 class MultiParallelizationBear(Bear):
     DEPENDENCIES = set()
 
-    def __init__(self, *args, tasks_count=3, **kwargs):
+    def __init__(self, *args, tasks_count=1, **kwargs):
         Bear.__init__(self, *args, **kwargs)
         self.tasks_count = tasks_count
 
@@ -496,13 +497,15 @@ class CoreTest(unittest.TestCase):
         # Test exception in result handler. The core needs to retry to invoke
         # the handler and then exit correctly if no more results and bears are
         # left.
-        # TODO yield multiple results to test retrial. Use mock for that.
-        bear_a = BearA(Section('test-section'), {})
+        bear = MultiParallelizationBear(
+            Section('test-section'), {}, tasks_count=10)
 
-        def on_result(result):
-            raise ValueError
+        on_result = unittest.mock.Mock(side_effect=ValueError)
 
-        run({bear_a}, on_result)
+        run({bear}, on_result)
+
+        on_result.assert_has_calls([unittest.mock.call(i) for i in range(10)],
+                                   any_order=True)
 
     def test_run_bear_exception(self):
         # Test exception in bear. Core needs to shutdown directly and not wait
@@ -512,7 +515,8 @@ class CoreTest(unittest.TestCase):
     def test_run_bear_with_multiple_tasks(self):
         # Test when bear is not completely finished because it has multiple
         # tasks.
-        bear = MultiParallelizationBear(Section('test-section'), {})
+        bear = MultiParallelizationBear(
+            Section('test-section'), {}, tasks_count=3)
 
         results = self.execute_run({bear})
 
