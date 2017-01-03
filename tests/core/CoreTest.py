@@ -22,7 +22,7 @@ class TestResult:
 
 
 class TestBear(Bear):
-    DEPENDENCIES = set()
+    BEAR_DEPS = set()
 
     def analyze(self, bear, section_name, file_dict):
         # The bear can in fact return everything (so it's not bound to actual
@@ -39,7 +39,7 @@ class TestBear(Bear):
 
 
 class MultiParallelizationBear(Bear):
-    DEPENDENCIES = set()
+    BEAR_DEPS = set()
 
     def __init__(self, *args, tasks_count=1, **kwargs):
         Bear.__init__(self, *args, **kwargs)
@@ -66,15 +66,15 @@ class BearB(TestBear):
 
 
 class BearC_NeedsB(TestBear):
-    DEPENDENCIES = {BearB}
+    BEAR_DEPS = {BearB}
 
 
 class BearD_NeedsC(TestBear):
-    DEPENDENCIES = {BearC_NeedsB}
+    BEAR_DEPS = {BearC_NeedsB}
 
 
 class BearE_NeedsAD(TestBear):
-    DEPENDENCIES = {BearA, BearD_NeedsC}
+    BEAR_DEPS = {BearA, BearD_NeedsC}
 
 
 class FailingBear(TestBear):
@@ -84,15 +84,15 @@ class FailingBear(TestBear):
 
 
 class BearF_NeedsFailingBear(TestBear):
-    DEPENDENCIES = {FailingBear}
+    BEAR_DEPS = {FailingBear}
 
 
 class BearG_NeedsF(TestBear):
-    DEPENDENCIES = {BearF_NeedsFailingBear}
+    BEAR_DEPS = {BearF_NeedsFailingBear}
 
 
 class BearH_NeedsG(TestBear):
-    DEPENDENCIES = {BearG_NeedsF}
+    BEAR_DEPS = {BearG_NeedsF}
 
 
 def get_next_instance(typ, iterable):
@@ -124,13 +124,15 @@ class MultiResultBear(TestBear):
 # results yielded from the bears dependent on. In this case it's 3,
 # MultiResultBear yields 2 results, and BearA 1.
 class DynamicTaskBear(TestBear):
-    DEPENDENCIES = {MultiResultBear, BearA}
+    BEAR_DEPS = {MultiResultBear, BearA}
 
     def analyze(self, run_id):
         return [run_id]
 
     def generate_tasks(self):
-        return (((i,), {}) for i in range(len(self.dependency_results)))
+        tasks_count = sum(len(results)
+                          for results in self.dependency_results.values())
+        return (((i,), {}) for i in range(tasks_count))
 
 
 class InitializeDependenciesTest(unittest.TestCase):
@@ -434,7 +436,7 @@ class CoreTest(unittest.TestCase):
             results,
             [(BearA.name, section.name, filedict)])
 
-        self.assertEqual(bear_a.dependency_results, tuple())
+        self.assertEqual(bear_a.dependency_results, {})
 
     def test_run_complex(self):
         # Run a complete dependency chain.
@@ -458,24 +460,31 @@ class CoreTest(unittest.TestCase):
 
         # Check dependency results.
         # For BearE.
+        self.assertIn(BearA, bear_e.dependency_results)
+        self.assertIn(BearD_NeedsC, bear_e.dependency_results)
+        self.assertEqual(len(bear_e.dependency_results), 2)
         self.assertTestResultsEqual(
-            bear_e.dependency_results,
-            [(BearA.name, section.name, filedict),
-             (BearD_NeedsC.name, section.name, filedict)])
+            bear_e.dependency_results[BearA],
+            [(BearA.name, section.name, filedict)])
+        self.assertTestResultsEqual(
+            bear_e.dependency_results[BearD_NeedsC],
+            [(BearD_NeedsC.name, section.name, filedict)])
 
         # For BearE -> BearA.
         bear_a = get_next_instance(BearA,
                                    (result.bear for result in results))
         self.assertIsNotNone(bear_a)
-        self.assertEqual(bear_a.dependency_results, tuple())
+        self.assertEqual(bear_a.dependency_results, {})
 
         # For BearE -> BearD.
         bear_d = get_next_instance(BearD_NeedsC,
                                    (result.bear for result in results))
         self.assertIsNotNone(bear_d)
 
+        self.assertIn(BearC_NeedsB, bear_d.dependency_results)
+        self.assertEqual(len(bear_d.dependency_results), 1)
         self.assertTestResultsEqual(
-            bear_d.dependency_results,
+            bear_d.dependency_results[BearC_NeedsB],
             [(BearC_NeedsB.name, section.name, filedict)])
 
         # For BearE -> BearD -> BearC
@@ -483,15 +492,17 @@ class CoreTest(unittest.TestCase):
                                    (result.bear for result in results))
         self.assertIsNotNone(bear_c)
 
+        self.assertIn(BearB, bear_c.dependency_results)
+        self.assertEqual(len(bear_c.dependency_results), 1)
         self.assertTestResultsEqual(
-            bear_c.dependency_results,
+            bear_c.dependency_results[BearB],
             [(BearB.name, section.name, filedict)])
 
         # For BearE -> BearD -> BearC -> BearB.
         bear_b = get_next_instance(BearB,
                                    (result.bear for result in results))
         self.assertIsNotNone(bear_b)
-        self.assertEqual(bear_b.dependency_results, tuple())
+        self.assertEqual(bear_b.dependency_results, {})
 
     def test_run_result_handler_exception(self):
         # Test exception in result handler. The core needs to retry to invoke
@@ -523,7 +534,7 @@ class CoreTest(unittest.TestCase):
         result_set = set(results)
         self.assertEqual(len(result_set), len(results))
         self.assertEqual(result_set, {0, 1, 2})
-        self.assertEqual(bear.dependency_results, tuple())
+        self.assertEqual(bear.dependency_results, {})
 
     def test_run_bear_exception_with_dependencies(self):
         # Test when bear with dependants crashes. Dependent bears need to be
@@ -542,8 +553,8 @@ class CoreTest(unittest.TestCase):
             results,
             [(BearA.name, section.name, filedict)])
 
-        self.assertEqual(bear_a.dependency_results, tuple())
-        self.assertEqual(bear_failing.dependency_results, tuple())
+        self.assertEqual(bear_a.dependency_results, {})
+        self.assertEqual(bear_failing.dependency_results, {})
 
     def test_run_bear_with_0_tasks(self):
         section = Section('test-section')
@@ -555,7 +566,7 @@ class CoreTest(unittest.TestCase):
         results = self.execute_run({bear})
 
         self.assertEqual(len(results), 0)
-        self.assertEqual(bear.dependency_results, tuple())
+        self.assertEqual(bear.dependency_results, {})
 
     def test_run_generate_tasks_dynamically_with_dependency_results(self):
         section = Section('test-section')
@@ -566,7 +577,13 @@ class CoreTest(unittest.TestCase):
         results = self.execute_run({bear})
 
         self.assertEqual(len(results), 6)
-        self.assertEqual(len(bear.dependency_results), 3)
+        self.assertEqual(len(bear.dependency_results), 2)
+        self.assertIn(MultiResultBear, bear.dependency_results)
+        self.assertIn(BearA, bear.dependency_results)
+        self.assertEqual(
+            len(bear.dependency_results[MultiResultBear]), 2)
+        self.assertEqual(
+            len(bear.dependency_results[BearA]), 1)
 
     def test_run_heavy_cpu_load(self):
         section = Section('test-section')
@@ -581,4 +598,4 @@ class CoreTest(unittest.TestCase):
         result_set = set(results)
         self.assertEqual(len(result_set), len(results))
         self.assertEqual(result_set, {i for i in range(100)})
-        self.assertEqual(bear.dependency_results, tuple())
+        self.assertEqual(bear.dependency_results, {})

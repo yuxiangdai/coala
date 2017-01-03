@@ -164,7 +164,7 @@ def finish_task(bear,
         results = task.result()
 
         for dependant in dependency_tracker.get_dependants(bear):
-            dependant.add_dependency_results(results)
+            dependant.add_dependency_results(bear, results)
     except Exception as ex:
         # FIXME Try to display only the relevant traceback of the bear if error
         # FIXME occurred there, not the complete event-loop traceback.
@@ -270,7 +270,7 @@ def initialize_dependencies(bears):
                                    type_to_instance_map[prev_bear_type])
 
         traverse_graph(bears_per_section,
-                       lambda bear: bear.DEPENDENCIES,
+                       lambda bear: bear.BEAR_DEPS,
                        instantiate_and_track)
 
     # TODO Part this up into different function?
