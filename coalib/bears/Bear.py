@@ -1,6 +1,7 @@
 import logging
 
 from coalib.core.Bear import Bear as Bear2
+from coalib.bears.BEAR_KIND import BEAR_KIND
 from coalib.bears.requirements.PackageRequirement import PackageRequirement
 from coalib.bears.requirements.PipRequirement import PipRequirement
 from coalib.output.printers.LogPrinter import LogPrinterMixin
@@ -118,12 +119,22 @@ class Bear(Bear2, Printer, LogPrinterMixin):
     >>> SomeOtherBear.BEAR_DEPS
     {<class 'coalib.bears.Bear.SomeBear'>}
     """
-    def __init__(self, *args, **kwargs):
+
+    @staticmethod
+    def kind():
+        """
+        :return: The kind of the bear
+        """
+        raise NotImplementedError
+
+    def __init__(self, section, file_dict):
         logging.warning('coalib.bears.Bear is deprecated, please use '
                         'coalib.core.Bear instead.')
 
-        Bear2.__init__(self, *args, **kwargs)
+        Bear2.__init__(self, section, file_dict)
         Printer.__init__(self)
+
+        self._kwargs = self.get_metadata().create_params_from_section(section)
 
     @classmethod
     def get_metadata(cls):
@@ -136,12 +147,11 @@ class Bear(Bear2, Printer, LogPrinterMixin):
             cls.run,
             omit={'self', 'dependency_results'})
 
-    # TODO Pass dependency results to run if defined in function signature!
+    def analyze(self, *args):
+        dependency_results = (
+            self.dependency_results if self.dependency_results else None)
 
-    # TODO get_metadata needs to be adjusted to grab signature of run like
-    # TODO   before.
-    def analyze(self, *args, **kwargs):
-        self.run(*args, **kwargs)
+        self.run(*args, dependency_results=dependency_results, **self._kwargs)
 
     def _print(self, output, **kwargs):
         logging.debug(output)
@@ -154,3 +164,12 @@ class Bear(Bear2, Printer, LogPrinterMixin):
 
     def run(self, *args, dependency_results=None, **kwargs):
         raise NotImplementedError
+
+    def generate_tasks(self):
+        if self.kind() == BEAR_KIND.LOCAL:
+            return (((filename, file), {})
+                    for filename, file in self.file_dict)
+        elif self.kind() == BEAR_KIND.GLOBAL:
+            return ((self.file_dict,), {}),
+        else:
+            raise NotImplementedError

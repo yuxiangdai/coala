@@ -101,17 +101,17 @@ class Bear(LogPrinterMixin):
     >>> SomeBear.data_dir == SomeOtherBear.data_dir
     False
 
-    ``BEAR_DEPS`` contains bear classes that are to be executed before this
-    bear gets executed. The results of these bears will then be passed to the
-    run method as a dict via the dependency_results argument. The dict
-    will have the name of the Bear as key and the list of its results as
-    results:
+    A bear can be dependant from other bears. ``BEAR_DEPS`` contains bear
+    classes that are to be executed before this bear gets executed. The results
+    of these bears will then be passed inside ``self.dependency_results`` as a
+    dict. The dict will have the name of the bear as key and a list of its
+    results as values:
 
     >>> class SomeBear(Bear): pass
     >>> class SomeOtherBear(Bear):
     ...     BEAR_DEPS = {SomeBear}
     >>> SomeOtherBear.BEAR_DEPS
-    {<class 'coalib.bears.Bear.SomeBear'>}
+    {<class 'coalib.core.Bear.SomeBear'>}
     """
 
     LANGUAGES = set()
@@ -132,7 +132,7 @@ class Bear(LogPrinterMixin):
     def name(cls):
         """
         :return:
-            The name of the bear
+            The name of the bear.
         """
         return cls.__name__
 
@@ -182,7 +182,8 @@ class Bear(LogPrinterMixin):
 
         # TODO Maybe a dict mapping bears to their results for easier access?
         # TODO   As normally you need to filter them always for bear types...
-        self._dependency_results = tuple()
+        # TODO   ---> YES
+        self._dependency_results = {}
 
         self.setup_dependencies()
         cp = type(self).check_prerequisites()
@@ -199,34 +200,50 @@ class Bear(LogPrinterMixin):
         """
         Resets all dependency results for this bear.
 
-        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
-        >>> bear.add_dependency_results([1, 2, 3])
+        >>> section = Section('my-section')
+        >>> file_dict = {'file1.txt': ['']}
+        >>> bear = Bear(section, file_dict)
+        >>> dependency_bear = Bear(section, file_dict)
+        >>> bear.add_dependency_results(dependency_bear, [1, 2, 3])
         >>> bear.dependency_results
-        (1, 2, 3)
+        {<class 'coalib.core.Bear.Bear'>: [1, 2, 3]}
         >>> bear.reset_dependency_results()
         >>> bear.dependency_results
-        ()
+        {}
         """
-        self._dependency_results = tuple()
+        self._dependency_results = {}
 
-    def add_dependency_results(self, dependency_results):
+    def add_dependency_results(self, bear, dependency_results):
         """
         Adds dependency results to this instance.
 
         This function is used by the core to add dependency results as they
         are ready.
 
-        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
+        >>> section = Section('my-section')
+        >>> file_dict = {'file1.txt': ['']}
+        >>> bear = Bear(section, file_dict)
         >>> bear.dependency_results
-        ()
-        >>> bear.add_dependency_results([1, 2, 3])
+        {}
+        >>> dependency_bear = Bear(section, file_dict)
+        >>> bear.add_dependency_results(dependency_bear, [1, 2, 3])
         >>> bear.dependency_results
-        (1, 2, 3)
+        {<class 'coalib.core.Bear.Bear'>: [1, 2, 3]}
 
+        :param bear:
+            The bear instance to add results for.
         :param dependency_results:
             The results to add.
         """
-        self._dependency_results += tuple(dependency_results)
+        bear_type = type(bear)
+
+        if bear_type not in self._dependency_results:
+            current_results = []
+            self._dependency_results[bear_type] = current_results
+        else:
+            current_results = self._dependency_results[bear_type]
+
+        current_results += dependency_results
 
     @property
     def dependency_results(self):
@@ -236,15 +253,20 @@ class Bear(LogPrinterMixin):
         This variable gets set during bear execution from the core and can be
         used from ``analyze``.
 
-        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
+        Modifications to the returned dictionary lead to undefined behaviour.
+
+        >>> section = Section('my-section')
+        >>> file_dict = {'file1.txt': ['']}
+        >>> bear = Bear(section, file_dict)
         >>> bear.dependency_results
-        ()
-        >>> bear.add_dependency_results([1, 2, 3])
+        {}
+        >>> dependency_bear = Bear(section, file_dict)
+        >>> bear.add_dependency_results(dependency_bear, [1, 2, 3])
         >>> bear.dependency_results
-        (1, 2, 3)
+        {<class 'coalib.core.Bear.Bear'>: [1, 2, 3]}
 
         :return:
-            A list of results received from dependency bears.
+            A dictionary with bear-types as keys and their results received.
         """
         return self._dependency_results
 
@@ -259,7 +281,7 @@ class Bear(LogPrinterMixin):
             cls.analyze,
             omit={'self'})
 
-    # FIXME Make this a classproperty.
+    # FIXME Make this a @classproperty.
     @classmethod
     def get_non_optional_settings(cls):
         """
@@ -346,8 +368,9 @@ class Bear(LogPrinterMixin):
 
         Take a sane simple bear:
 
-        >>> from queue import Queue
-        >>> bear = Bear(Section("a section"), Queue())
+        >>> section = Section('my-section')
+        >>> file_dict = {'file1.txt': ['']}
+        >>> bear = Bear(section, file_dict)
 
         We can now carelessly query for a neat file that doesn't exist yet:
 
@@ -374,8 +397,8 @@ class Bear(LogPrinterMixin):
         if exists(filename):
             return filename
 
-        logging.info('{bearname}: Downloading {filename!r} from {url}.'
-                     .format(bearname=cls.name, filename=filename, url=url))
+        logging.info('{}: Downloading {} into {!r}.'
+                     .format(cls.name, url, filename))
 
         with urlopen(url) as response, open(filename, 'wb') as out_file:
             copyfileobj(response, out_file)
