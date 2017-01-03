@@ -123,7 +123,7 @@ class Bear(Bear2, Printer, LogPrinterMixin):
     @staticmethod
     def kind():
         """
-        :return: The kind of the bear
+        :return: The kind of the bear.
         """
         raise NotImplementedError
 
