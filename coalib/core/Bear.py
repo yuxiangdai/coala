@@ -218,20 +218,17 @@ class Bear(LogPrinterMixin):
         This variable gets set during bear execution from the core and can be
         used from ``analyze``.
 
+        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
+        >>> bear.dependency_results
+        ()
+        >>> bear.add_dependency_results([1, 2, 3])
+        >>> bear.dependency_results
+        (1, 2, 3)
+
         :return:
             A list of results received from dependency bears.
         """
         return self._dependency_results
-
-    def log_message(self, log_message, timestamp=None, **kwargs):
-        level_map = {LOG_LEVEL.DEBUG: logging.DEBUG,
-                     LOG_LEVEL.WARNING: logging.WARNING,
-                     LOG_LEVEL.INFO: logging.INFO,
-                     LOG_LEVEL.ERROR: logging.ERROR}
-
-        logging.warning("Using 'self.log' of 'Bear' is deprecated. Please "
-                        "use the Python built-in 'logging' module instead.")
-        logging.log(level_map[log_message.log_level], log_message.message)
 
     # TODO ?
     @classmethod

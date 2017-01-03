@@ -135,7 +135,9 @@ class Bear(Bear2, Printer, LogPrinterMixin):
         logging.debug(output)
 
     def log_message(self, log_message, timestamp=None, **kwargs):
-        logging.log(LOG_LEVEL_TO_LOGGING_LEVEL(log_message.log_level),
+        logging.warning("Using 'self.log' of 'Bear' is deprecated. Please "
+                        "use the Python built-in 'logging' module instead.")
+        logging.log(LOG_LEVEL_TO_LOGGING_LEVEL[log_message.log_level],
                     log_message.message)
 
     def run(self, *args, dependency_results=None, **kwargs):
