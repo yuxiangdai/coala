@@ -19,6 +19,11 @@ from coalib.settings.FunctionMetadata import FunctionMetadata
 from coalib.settings.Section import Section
 
 
+# TODO File issue to rename .BEAR_DEPS to .DEPENDENCIES.
+# TODO File issue to improve `new_result` or think about it again?
+# TODO Rename result.origin to result.bear?
+
+
 class Bear(LogPrinterMixin):
     """
     A bear contains the actual subroutine that is responsible for checking
@@ -180,9 +185,6 @@ class Bear(LogPrinterMixin):
         self.section = section
         self.file_dict = file_dict
 
-        # TODO Maybe a dict mapping bears to their results for easier access?
-        # TODO   As normally you need to filter them always for bear types...
-        # TODO   ---> YES
         self._dependency_results = {}
 
         self.setup_dependencies()
@@ -415,7 +417,6 @@ class Bear(LogPrinterMixin):
         makedirs(data_dir, exist_ok=True)
         return data_dir
 
-    # TODO Different name? What about constructor method?
     @property
     def new_result(self):
         """
@@ -423,12 +424,22 @@ class Bear(LogPrinterMixin):
         """
         return partial(Result.from_values, self)
 
-    # TODO Rename result.origin to result.bear?
-
     def execute_task(self, args, kwargs):
-        # TODO Docs -> mention that here items are precollected into a list,
-        # TODO   as async stuff with generators - which we usually use in
-        # TODO   `analyze` - don't work.
+        """
+        Executes a task.
+
+        By default returns a list of results collected from this bear.
+
+        This function has to return something that is picklable to make bears
+        work in multi-process environments.
+
+        :param args:
+            The arguments of a task.
+        :param kwargs:
+            The keyword-arguments of a task.
+        :return:
+            A list of results from the bear.
+        """
         return list(self.analyze(*args, **kwargs))
 
     def analyze(self, *args, **kwargs):

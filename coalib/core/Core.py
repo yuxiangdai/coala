@@ -13,8 +13,6 @@ from coalib.core.Graphs import traverse_graph
 # FIXME   passing always parameters around like `result_callback`,
 # FIXME   `dependency_tracker`, `event_loop`, `running_tasks` and `executor`.
 
-# TODO Rename .DEPENDENCIES to .BEAR_DEPS, I'll file an issue later for
-# TODO   renaming^^
 
 def get_cpu_count():
     try:
