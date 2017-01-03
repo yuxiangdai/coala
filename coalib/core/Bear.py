@@ -217,6 +217,13 @@ class Bear(LogPrinterMixin):
         This function is used by the core to add dependency results as they
         are ready.
 
+        >>> bear = Bear(Section('my-section'), {'file1.txt': ['']})
+        >>> bear.dependency_results
+        ()
+        >>> bear.add_dependency_results([1, 2, 3])
+        >>> bear.dependency_results
+        (1, 2, 3)
+
         :param dependency_results:
             The results to add.
         """
