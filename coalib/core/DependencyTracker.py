@@ -3,7 +3,6 @@ from itertools import chain
 from coalib.core.Graphs import traverse_graph
 
 
-# TODO Make doctests and delete unnecessary tests in test file is possible
 class DependencyTracker:
     """
     A ``DependencyTracker`` allows to register and manage dependencies between
@@ -40,7 +39,6 @@ class DependencyTracker:
     set()
     >>> tracker.resolve(object3)
     {<object object at ...>}
-
     """
 
     def __init__(self):
@@ -183,7 +181,6 @@ class DependencyTracker:
         """
         return set(self._dependency_dict.keys())
 
-    # TODO Use that in tests^^
     def __iter__(self):
         """
         Returns an iterator that iterates over all dependency relations.

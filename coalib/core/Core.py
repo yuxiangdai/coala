@@ -271,7 +271,6 @@ def initialize_dependencies(bears):
                        lambda bear: bear.BEAR_DEPS,
                        instantiate_and_track)
 
-    # TODO Part this up into different function?
     # Get all bears that aren't resolved and exclude those from scheduler set.
     bears -= {bear for bear in bears
               if dependency_tracker.get_dependencies(bear)}
