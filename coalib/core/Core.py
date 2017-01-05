@@ -185,7 +185,7 @@ def finish_task(bear,
     if results is not None:
         for result in results:
             try:
-                # FIXME Long operations on the result-callback do block the
+                # FIXME Long operations on the result-callback could block the
                 # FIXME   scheduler significantly. It should be possible to
                 # FIXME   schedule new Python Threads on the given event_loop
                 # FIXME   and process the callback there.
