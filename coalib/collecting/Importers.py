@@ -1,34 +1,30 @@
 from contextlib import ExitStack
+from importlib.util import spec_from_file_location
 import inspect
 import os
 import platform
-import sys
 
 from coala_utils.ContextManagers import suppress_stdout
 from coala_utils.decorators import arguments_to_lists, yield_once
 
+# in Python > 3.4 this can be imported from importlib.utils
+from coalib.misc.Compatibility import module_from_spec
+
 
 def _import_module(file_path):
     if not os.path.exists(file_path):
-        raise ImportError
+        raise ImportError("can's import non-existing file %s"
+                          % repr(file_path))
 
     module_name = os.path.splitext(os.path.basename(file_path))[0]
-    module_dir = os.path.dirname(file_path)
+    spec = spec_from_file_location(module_name, file_path)
+    if not spec:
+        raise ImportError("%s doesn't seem to be a python module"
+                          % repr(file_path))
 
-    if module_dir not in sys.path:
-        sys.path.insert(0, module_dir)
-
-    # Ugly inconsistency: Python will insist on correctly cased module names
-    # independent of whether the OS is case-sensitive or not.
-    # We want all cases to match though.
-    if platform.system() == 'Windows':  # pragma: nocover
-        for cased_file_path in os.listdir(module_dir):
-            cased_module_name = os.path.splitext(cased_file_path)[0]
-            if cased_module_name.lower() == module_name.lower():
-                module_name = cased_module_name
-                break
-
-    return __import__(module_name)
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _is_subclass(test_class, superclasses):
